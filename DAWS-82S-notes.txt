@@ -21,9 +21,13 @@ For author identity configure below
 git config --global user.email "rajasekharb974@gmail.com"
 git config --global user.name "rajasekhar"
 
-To unstage a file after using git add . use the command below
+To unstage a new file after using git add . use the command below
 git rm --cached DAWS-82S-notes.txt
 
 Before commiting the changes if the file is modified again after git add . then to revert the changes made, use the command below
- git restore DAWS-82S-notes.txt		--- to igonre the file changes
+ git restore DAWS-82S-notes.txt		---  to discard changes in working directory
  git add .							--- to include the file changes
+ 
+ git restore --staged DAWS-82S-notes.txt  -- to unstage the already existing file
+ 
+  Test file update after add comand and withou the file committed
