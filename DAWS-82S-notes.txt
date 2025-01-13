@@ -1,0 +1,29 @@
+session 01 
+-------------------------------------------------------------------------------------------------------------------------------
+What is DevOps?
+Waterfall vs Agile vs DevOps
+SDLC
+
+create organisation in Github
+create repo in  new org in github
+create folder with 82s and create folder with repo name locally
+Execute the below commands to  intialise repo in local and push to remote
+--------------------------------------------------------------------------
+git init
+git branch -M main
+git remote add origin https://github.com/DAWS-2025-82S/notes.git
+git add .
+git commit -m "session-01"
+git push origin main
+
+For author identity configure below
+------------------------------------
+git config --global user.email "rajasekharb974@gmail.com"
+git config --global user.name "rajasekhar"
+
+To unstage a file after using git add . use the command below
+git rm --cached DAWS-82S-notes.txt
+
+Before commiting the changes if the file is modified again after git add . then to revert the changes made, use the command below
+ git restore DAWS-82S-notes.txt		--- to igonre the file changes
+ git add .							--- to include the file changes
