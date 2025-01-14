@@ -31,3 +31,46 @@ Before commiting the changes if the file is modified again after git add . then 
  git restore --staged DAWS-82S-notes.txt  -- to unstage the already existing file in staging area
 
 Test updated in github
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 02 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+What is a Computer?
+Client Server Architecture
+
+AWS account with N-virginia region because of less cost
+AWS AMI setup
+AWS security group --- allow-all
+Allow all Inbound and outbound
+AWS Instance with devops-practice image
+
+Linus Torvalds  -- Inventor of linux
+Linux kernel
+Linux -> C language == Kernel 
+OS == Kernel + User Interface == Open Source
+
+Authentication mechanisms
+What you know --> Username and Password
+What you have --> Username and token/OTP
+What you are --> Fingerprints, Retina, Palm, etc.
+
+Git bash Installation
+
+Public key and Private key
+
+public key -- copied to the server
+Private key -- shared only with the users who need access, not to all
+
+Lock and Key 
+Lock --> Public 
+Key --> Private
+
+ssh-keygen -f <filename>
+
+Server == IP(Public)
+
+Enable file extensions in windows
+ControlPanel--->FileExplorer--->Uncheck option Hide extensions
+
+keyPairs---> Import keypairs in AWS
+
+
