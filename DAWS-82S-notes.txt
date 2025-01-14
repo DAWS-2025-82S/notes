@@ -74,3 +74,122 @@ ControlPanel--->FileExplorer--->Uncheck option Hide extensions
 keyPairs---> Import keypairs in AWS
 
 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 08 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+DNS 
+How DNS works
+
+Browser--->OS-->ISP(DNS Resolver)-->ICANN(RootServer)-->TLD Server-->NameServer
+
+ICANN --> Internet Corporation for assigned names and numbers --> countries, reputed organistions
+ICANN maintains root servers
+
+there are 13 root servers in the world
+https://www.iana.org/domains/root/servers
+
+top level domains(ICANN root servers will have this top level domain)
+.telugu , .com , .in , .uk, .net, .edu, .gov, .us, .au, .org, .ai, .online
+
+.gov.in, .co.in --> sub level domain
+
+ICANN --> To start new domain i.e., top level domain  .telugu domain we need to approach ICANN. I need to complete all the process
+
+domain registars(mediators) --> godaddy, hostinger, aws, gcp, azure
+
+https://en.wikipedia.org/wiki/List_of_Internet_top-level_domains
+
+Create Domain using hostinger
+Domain -- raj82s.online
+
+Register the domain in AWS using hosted zone
+Copy the nameservers from AWS and update/change nameservers in Hostinger
+
+change in NS --> Hostinger updates the change of Nameservers to .online TLD
+now aws manages my domain
+
+Hostinger updates Radix Registry(Top level TLD) about raj82s.online --> who bought this domain and nameservers
+
+nameservers = who managed this domain = records to the DNS
+
+A record = IP address
+
+Create A record for backend and DB with Private IP
+Create A record for frontend with public IP
+
+DB A record       -- mysql.raj82s.online
+backend A record  -- backend.raj82s.online
+frontend A record -- raj82s.online
+
+mysql.raj82s.online --> DNS resolver --> .online TLD --> provides nameservers to raj82s.online --> mysql.raj82s.online A record
+
+nslookup -- to check the domain
+
+Record types
+=============
+A --> points to IP address
+CNAME --> points to another domain
+MX --> mail records (info@joindevops.com)
+TXT --> Domain ownership validaton purpose
+NS --> nameservers
+SOA --> who is the authority of this domain
+
+What happens when we book domain?
+What happens when someone enter our domain in browser?
+How to become TLD?
+
+[Unit]
+Description = Backend Service
+
+[Service]
+User=expense
+Environment=DB_HOST="mysql.raj82s.online"
+ExecStart=/bin/node /app/index.js
+SyslogIdentifier=backend
+
+[Install]
+WantedBy=multi-user.target
+
+
+proxy_http_version 1.1;
+
+location /api/ { proxy_pass http://backend.raj82s.online:8080/; }
+
+location /health {
+  stub_status on;
+  access_log off;
+}
+
+http://raj82s.online/api/transaction
+
+http://backend.raj82s.online:8080/transaction
+
+
+http://raj82s.online/api/transaction --> send request to backend --> backend responds with data
+
+inode, symlink/softlink and hardlink
+
+what is inode?
+
+inode stores the file type(file or folder), permissions, ownership, file size, timestamp, disk location(memory location)
+
+lrwxrwxrwx  1 root root    11 Dec 26 03:10 DbConfig1.js -> DbConfig.js
+l represents link file
+
+symlink is like shortcut it points to the original file. symlink inode and actual file inode is different. symlink breaks when actual file is deleted. symlink can be created to folders/directories
+
+hardlink inode is same as actual file. hardlink is useful for backup of the file. if original file is deleted hardlink remains same. we can't create hardlinks to folders/directories
+
+how do you findout hardlinks for a particular file?
+
+find / -inum "<inode-number>"
+
+
+
+
+
+
+
+
+
