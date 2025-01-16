@@ -197,6 +197,15 @@ Not scalable to many servers
 Password security
 syntax is not easy
 
+user: ec2-user
+Pwd: DevOps321
+AMI Image: RHEL devops-practice
+
+ssh ec2-user@Public-IP
+ssh connection will not work with private IP
+
+ssh ec2-user@98.81.90.117 'echo "Hello Word" > /tmp/hello.txt'
+
 What is configuration management
 Configuration Management tools --> Chef, puppet, rundeck, Ansible
 Ansible architecture
@@ -211,7 +220,21 @@ Ansible also implmented pull based for few usecases.
 adhoc commands
 ====================
 ansible all -i <IP>, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m ping
-ansible all -i <PrivateIP>, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m ping
+
+ansible all -i <PrivateIP>, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m ping  --- Use Private IP or Public IP when connecting  from AWS instance to AWS instance
+
+ansible all -i <PublicIP>, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m ping --- Use Public IP when connecting  from External instance to AWS instance
+
+ansible all -i 172.31.23.37, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m dnf -a "name=nginx state=installed" -b
+
+ansible all -i 172.31.23.37, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m service -a "name=nginx state=started" -b
+
+Playbook
+---------
+
+ansible-playbook -i inventory.ini -e ansible_user=ec2-user -e ansible_password=DevOps321 01-playbook.yaml
+
+git pull --- pull the changes from github
 
 XML vs JSON vs YAML
 Playbook
