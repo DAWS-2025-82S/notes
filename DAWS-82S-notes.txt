@@ -217,6 +217,8 @@ sudo dnf install ansible -y
 Ansible uses SSH protocol, no need of agent i.e agentless
 Ansible also implmented pull based for few usecases.
 
+XML vs JSON vs YAML
+
 adhoc commands
 ====================
 ansible all -i <IP>, -e ansible_user=ec2-user -e ansible_password=DevOps321 -m ping
@@ -236,11 +238,60 @@ ansible-playbook -i inventory.ini -e ansible_user=ec2-user -e ansible_password=D
 
 git pull --- pull the changes from github
 
-XML vs JSON vs YAML
-Playbook
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 17
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Ansible Multiple Plays
 
+Types of Variables
+	Play 
+	Task
+	Files
+	Prompt
+	Inventory
+	command line or args
+Data types
+Conditions
 
+variable have a name we can define, it can hold value. You can use it wherever you want. if you change the value it will reflect everywhere. it is DRY
+In shell script:
+COURSE=DevOps
+$COURSE or ${COURSE}
 
+vars:
+    COURSE: "DevOps with AWS"
+    DURATION: 120HRS
+    TRAINER: Sivakumar
+	
+In Ansible
+"{{COURSE}}"
+
+#1. Command line or args
+#2. Task level
+#3. Files
+#4. Prompt
+#5. Play
+#6. Inventory
+#7. Roles
+
+Using -e to pass extra vars
+ansible -u carol -e 'ansible_user=brian' -a whoami all
+
+ ansible-playbook -i inventory.ini 11-vars-args.yaml -e 'COURSES="Devops with AWS"' -e DURATIONTime=120HRS -e TRAINERS=RajasekharReddy
+
+ ansible-playbook -i inventory.ini 11-vars-args.yaml -e "COURSES='Devops with AWS'" -e "DURATIONTime=120HRS" -e "TRAINERS=Rajasekhar"
+ 
+  ansible-playbook -i inventory.ini 11-vars-args.yaml -e "COURSES='Devops with AWS'" -e DURATIONTime=120HRS -e TRAINERS=RajasekharReddy
+ 
+  ansible-playbook -i inventory.ini 11-vars-args.yaml -e COURSES="Devops with AWS" -e DURATIONTime=120HRS -e TRAINERS=Rajasekhar  -- wrong output becuase of space
+  need to use both double and single quotes
+  
+ Ansible challenge : Files is a revered word and ansible won't work as expected  if used as variable value
+vars:
+    DURATION: Files
+ 
+
+ 
 
 
 
