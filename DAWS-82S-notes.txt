@@ -286,15 +286,233 @@ ansible -u carol -e 'ansible_user=brian' -a whoami all
   ansible-playbook -i inventory.ini 11-vars-args.yaml -e COURSES="Devops with AWS" -e DURATIONTime=120HRS -e TRAINERS=Rajasekhar  -- wrong output becuase of space
   need to use both double and single quotes
   
- Ansible challenge : Files is a revered word and ansible won't work as expected  if used as variable value
+ Ansible challenge : Files is a reserved word and ansible won't work as expected  if used as variable value
 vars:
     DURATION: Files
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 18
+------------------------------------------------------------------------------------------------------------------------------------------------- 
+https://techviewleo.com/list-of-ansible-os-family-distributions-facts/
  
+Loops
+Filters
+No Functions in ansible use filters
+Ansible facts
 
+ANSIBLE_DISPLAY_SKIPPED_HOSTS=false ansible-playbook -i inventory.ini 14-conditions.yaml
+
+for ipaddr install python library 'netaddr'
+To install python packages use pip
+pip3.9 install netaddr
+
+shell and command modules
+ansible.builtin.shell vs ansible.builtin.command
+shell --> it is like you are logging inside the server and executing command... We can access variables, we can use redirections, we can use pipes
+command --> this is like running commands from outside, you will not get access to shell variables, redirections, pipes, etc.
+simple command --> you can use command module, it is more secure. shell is for complex commands and less secure
+
+Expense MySQL setup using ansible 
+
+install cryptography,PyMySql packages using pip 3.9 
+
+ansible-playbook -i inventory.ini mysql.yaml
+Mysql fails with erroe if db root user password is not configured
+
+fatal: [172.31.20.49]: FAILED! => {"changed": false, "msg": "unable to connect to database using pymysql 1.1.1, 
+check login_user and login_password are correct or /root/.my.cnf has the credentials. 
+Exception message: (1130, \"Host 'ip-172-31-20-49.ec2.internal' is not allowed to connect to this MySQL server\")"}
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 19
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ Expense Backend(Nodejs) setup using ansible
  
+ ansible-playbook -i inventory.ini backend.yaml
+ 
+  Expense Fronend(Nginx) setup using ansible
+
+ ansible-playbook -i inventory.ini frontend.yaml
+
+mysql -h backend.raj82s.online -u root -pExpenseApp@1
+
+Failed after creating A record with error 
+
+rajasekhar@ManDev:~/GitHub/DAWS-2025-82S/repos/04-expense-ansible$  nslookup frontend.raj82s.online
+Server:         10.255.255.254
+Address:        10.255.255.254#53
+
+** server can't find frontend.raj82s.online: NXDOMAIN
+
+The above error is thrown when A record is still not updated
+
+ansible.cfg file
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 20
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Ansible Roles
+
+ansible-playbook mysql.yaml -- no need to use -i to mention inventory file because it is configured in ansible.cfg file
+code reuse
+DRY --> Don't repeat yourself
+A standard structure of writing playbooks that contains tasks, variables, dependencies, files, templates, libraries. We can reuse roles.
+
+roles/role-name
+
+tasks --> You can keep all your tasks here, ansible automatically loads them
+	main.yaml 
+vars --> variables required for this role
+	main.yaml
+templates --> you can keep variables in the file, ansible replace the value at runtime.
+	any file
+files --> We can keep files in this folder
+	any file names
+Handlers --> notifiers when some change event is happened
+defaults/         #
+	main.yml      #  <-- default lower priority variables for this role
+meta  --> dependencies of this role
+	main.yaml
+library/          # roles can also include custom modules
+	
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: If you are using a module and expect the file to exist on the remote, see the remote_src option
+fatal: [backend.daws82s.online]: FAILED! => {"changed": false, "msg": "Could not find or access 'backend.service'\nSearched in:\n\t/home/ec2-user/expense-ansible-roles/roles/backend/files/backend.service\n\t/home/ec2-user/expense-ansible-roles/roles/backend/backend.service\n\t/home/ec2-user/expense-ansible-roles/roles/backend/tasks/files/backend.service\n\t/home/ec2-user/expense-ansible-roles/roles/backend/tasks/backend.service\n\t/home/ec2-user/expense-ansible-roles/files/backend.service\n\t/home/ec2-user/expense-ansible-roles/backend.service on the Ansible Controller.\nIf you are using a module and expect the file to exist on the remote, see the remote_src option"}
+
+ansible handlers are notifiers. when some change event happened in one task, we can trigger other tasks through handlers
+
+ansible-playbook mysql.yaml
+ansible-playbook backend.yaml
+ansible-playbook frontend.yaml
+
+deployment
+===========
+there will be one folder where code exist
+stop the server
+remove old code
+download new code
+restart the server
+
+1. remove directory
+2. re create directory
+3. download code
+
+How do you controll tasks in ansible.. few tasks should run, few tasks should not run...
+
+ansible tags
+ansible-playbook backend.yaml -t deployment
+ansible-playbook frontend.yaml -t deployment
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 21
+-------------------------------------------------------------------------------------------------------------------------------------------------
+create AWS IAM user for ansible with access key and admin role
+
+aws cli needs to be installed
+
+aws configure  -- configure this ansible server
+[ ec2-user@ip-172-31-19-238 ~/03-ansible ]$ aws configure
+
+Expense ec2 and route53 creation using ansible
+A record creation using ansible
+
+ansible-playbook 22-create-ec2-r53.yaml  -i inventory.ini
+
+Ansible vault
+
+ansible-vault  view /home/rajasekhar/GitHub/DAWS-2025-82S/repos/05-expense-roles/roles/mysql/vars/vault.yaml --ask-vault-pass
+admin123
+
+--ask-vault-pass
+--vault-password-file
+
+ansible-playbook mysql.yaml --ask-vault-pass
+ansible-playbook mysql.yaml --vault-password-file
+
+ansible.cfg file
+-------------------
+[defaults]
+
+inventory      = inventory.ini
+#vault_password_file = /home/ec2-user/mysql_vault_pass
+ask_vault_pass = True
+
+de commissiong ansible vault and replace with secret manager or paramter store
+secret manager is more cost than parameter store
+ansible aws ssm parameter
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 22 - PENDING
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 23
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ssh connection with key in ansible.cfg
 
+terraform
+-----------
+shell, ansible, terraform,sql, perl, customised scriptings
+1. syntax --> variables, data types, conditions, functions and loops, error handling
+2. process understanding
+
+CRUD --> Ansible is failed to manage the infrastrucutre. For example if some manual edits happen ansible can't recognise those.
+It creates duplicate resources. So ansible is not perfect in state management
+
+Ansible --> with in the server, Ansible is perfect
+
+Manual infra
+=============
+1. time
+2. human errors
+3. cost
+4. reusable effort
+5. don't know who did mistake
+6. modifications are not easy
+7. not scalable
+
+IaaC --> Infra as a code
+
+version control --> you can version control your infra. expense-infra-1.0 expense-infra-2.0
+restore if something goes wrong --> easy to restore if something goes wrong
+Consistent infra --> you can create same infra across all environments
+Inventory management --> you can understand the resources by seeing terraform files
+dependency management --> terraform can understand the dependency between resources. First it will create dependencies and then actual resources
+code reusability --> terraform modules, you can create similar infra for any number of projects using modules
+Cost --> automation of CRUD --> we can save costs
+state management
+declarative --> easy syntax
+Git --> you can review code before apply
+
+terraform manual Installation
+Install AWS CLI in windows
+aws configure
+
+aws s3  ls
+
+ansible modules
+terraform providers --> provider means, a system which terraform can connect and create resources
+
+terraform aws provider
+terraform file extensions are .tf
+terraform uses HCL --> Hashicorp configuration language
+
+resource "type-of-resource" "name-of-resource" {
+	your-parameters
+}
+
+resource "aws_instance" "this" {
+
+}
+
+terraform init   --- Downloads and install provider
+terraform fmt    --- format the files properly
+terraform validate --- validate the configuration
+terraform plan
+terraform apply  --- to create resources
+terraform apply -auto-approve --- to create resources without confirmation
+terraform destroy  --- to destroy resources
+terraform destroy -auto-approve  --- to destroy resources without confirmation 
+
+terraform show  --- Inspect the current state
+terraform state list ---  to list the resources in your project's state
 
 
 

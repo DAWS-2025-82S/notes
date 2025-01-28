@@ -1,6 +1,0 @@
-test
-
- Test file update after add comand 
- 
- 
- and withou the file committed
