@@ -1,0 +1,10 @@
+provider
+cidr_blocks
+
+Terraform resources
+--------------------
+aws_instance
+aws_security_group
+ingress
+egress
+aws_route53_record
