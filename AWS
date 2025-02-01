@@ -4,3 +4,6 @@ Hosted zone
 A records
 IAM user
 Parameter store
+
+s3 bucket -- to store terraform lock file remotely instead of local
+DynamoDB  -- for locking the state file

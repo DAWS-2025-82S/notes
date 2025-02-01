@@ -1,5 +1,10 @@
+required_providers
 provider
 cidr_blocks
+output
+locals
+backend block -- for s3 bucket and DynamoDB configuration to store and secure state file
+create DynamoDB table with Partition Key as "LockID" other it will fail for other partition kay
 
 Terraform resources
 --------------------
@@ -8,3 +13,132 @@ aws_security_group
 ingress
 egress
 aws_route53_record
+
+
+data sources
+--------------
+aws_ami
+aws_vpc
+aws_instance
+
+terraform commands
+-------------------
+terraform init   --- Downloads and install provider
+terraform fmt    --- format the files properly
+terraform validate --- validate the configuration
+terraform plan
+terraform apply  --- to create resources
+terraform apply -auto-approve --- to create resources without confirmation
+terraform destroy  --- to destroy resources
+terraform destroy -auto-approve  --- to destroy resources without confirmation 
+
+terraform show  --- Inspect the current state
+terraform state list ---  to list the resources in your project's state
+
+command line var:
+-----------------
+terraform plan -var "instance_type=t3.large"
+terraform plan -var "instance_type=t3.large" -var "from_port=99"
+
+env var:
+--------
+export TF_VAR_instance_type="t3.xlarge"
+unset TF_VAR_instance_type
+
+If you wish to attempt automatic migration of the state, use
+		terraform init -migrate-state
+If you wish to store the current configuration with no changes to the state, use 
+		terraform init -reconfigure
+
+
+variables
+---------------------------------------------------------------------
+varaibles can be accessed by using
+var.<VariableName>
+
+Resources can be accessed by using
+<ResourceType>.<ResourceName>.<Attributes>
+
+Data sources can be accessedd by using
+data.<DataSourceType>.<DataSourceName>.<Attributes>
+
+locals can be accessedd by using
+local.<VariableName>
+
+
+Output will be print by using output block
+
+// print var value
+output  "variable_output" {
+  value       = var.<VariableName>
+}
+// print resource output
+output  "resource_output" {
+  value       = <ResourceType>.<ResourceName>.<Attributes>
+}
+// print DataSource output
+output  "datasource_output" {
+  value       = data.<DataSourceType>.<DataSourceName>.<Attributes>
+}
+// print locals variable output
+output  "output_local_variable" {
+  value  = local.<VariableName>
+}
+// output multiple variables
+output "instance_info" {
+  value = {
+    instance_id      = data.aws_instance.example.id
+    private_ip       = data.aws_instance.example.private_ip
+    public_ip        = data.aws_instance.example.public_ip
+  }
+}
+
+when changed backend configuration
+rajas@ManDev MINGW64 /d/GitHub/DAWS-2025-82S/repos/06-terraform/07-remote-state (main)
+$   terraform init
+Initializing the backend...
+╷
+│ Error: Backend configuration changed
+│
+│ A change in the backend configuration has been detected, which may require
+│ migrating existing state.
+│
+│ If you wish to attempt automatic migration of the state, use "terraform
+│ init -migrate-state".
+│ If you wish to store the current configuration with no changes to the
+│ state, use "terraform init -reconfigure".
+
+
+│ If you wish to attempt automatic migration of the state, use "terraform
+│ init -migrate-state".
+│ If you wish to store the current configuration with no changes to the
+│ state, use "terraform init -reconfigure".
+
+----------------------------------------------------------------------------------------------------------
+create DynamoDB table with Partition Key as "LockID" other it will fail for other partition key
+-------------------------------------------------------------------------------------------------
+$ terraform apply -auto-approve
+Acquiring state lock. This may take a few moments...
+╷
+│ Error: Error acquiring the state lock
+│
+│ Error message: operation error DynamoDB: PutItem, https response error
+│ StatusCode: 400, RequestID:
+│ NDIJ4BSVSFP7E0AHFQS7OFKJFBVV4KQNSO5AEMVJF66Q9ASUAAJG, api error
+│ ValidationException: One or more parameter values were invalid: Missing the
+│ key testpartitionkey in the item
+│ Unable to retrieve item from DynamoDB table "82s-state-locking": operation
+│ error DynamoDB: GetItem, https response error StatusCode: 400, RequestID:
+│ KMBISS2HOHU93J4UDHFOL9ODENVV4KQNSO5AEMVJF66Q9ASUAAJG, api error
+│ ValidationException: The provided key element does not match the schema
+│
+│ Terraform acquires a state lock to protect the state from being written
+│ by multiple users at the same time. Please resolve the issue above and try
+│ again. For most commands, you can disable locking with the "-lock=false"
+│ flag, but this is not recommended.
+
+
+
+check ec2 creation without security group
+check variables -var "varname1=value" 
+check renaming terraform.tfvars with different name

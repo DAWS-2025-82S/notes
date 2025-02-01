@@ -549,15 +549,26 @@ cmd, tfvars, env variables, default
 
 TF_VAR_<var-name>
 
+Below is the order terraform load variables with high to low
+-------------------------------------------------------------
 1. command line --> -var "<var-name>=<var-value>"
 2. tfvars
 3. env var
 4. default values
 5. user prompt
+
+// By default terraform will load vars from *.auto.tfvars and terraform.tfvars files
+// If the file name  is different to load vars from different file name use -var-file=<filename> option
+// terraform plan -var-file=test.tfvars
+// terraform apply -var-file=test.tfvars
+
 command line var:
+-----------------
 terraform plan -var "instance_type=t3.large"
+terraform plan -var "instance_type=t3.large" -var "from_port=99"
 
 env var:
+--------
 export TF_VAR_instance_type="t3.xlarge"
 unset TF_VAR_instance_type
 
@@ -570,6 +581,8 @@ else{
 	this statement run if expression is false
 }
 
+condition
+---------
 expression ? "this runs if true" : "this runs if false"
 
 if dev environment t3.micro, if prod env you can run t3.small
@@ -598,6 +611,8 @@ you can't create custom functions in terraform
 
 length,max,lookup,split
 
+terraform console
+
 merge -- to merge 2 maps 
 course1 = {
 	name = "devops",
@@ -614,3 +629,70 @@ merge(course1, course2)
 name = "terraform"
 duration = "120hrs
 
+target resources similar to tags in ansible
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 25
+-------------------------------------------------------------------------------------------------------------------------------------------------
+data sources
+==================
+data sources are used to query existing information from the provider. 
+devops-practice --> ami-356dgtr4367yt --> ami id changes when new updates are posted.
+
+data "<type>" "<name>" {
+	
+}
+
+output blocks are used to print the information. It will be used in module development too.
+
+locals
+==================
+locals are used to run the expressions or functions and save the results to variable
+
+locals are used to store expressions, it can even store simple key value pairs just like variables.
+variables can't store expressions. variable can't refer other variable. locals can refer other locals or variables
+variables can be overriden. locals can't be overriden
+
+state management
+==================
+declared/desired infra ==> .tf files. Whatever user write in tf files, that is what user wants
+actual infra ==> what terraform is creating in provider
+
+desired infra == actual infra
+
+terraform.tfstate ==> it is a file terraform creates to know what it is created. this is actual infra created by terraform
+
+someone changed the name of ec2 manually inside console
+
+terraform plan or terraform apply
+
+terraform reads state file and then compare that with actual infra using provider
+
+if you update tf files....
+
+terraform.tfstate --> expense-dev-backend
+compared with tf files --> expense-dev-backend-changed
+
+if you update few paramters, resources will not be created again it will just update
+but few parameters if you update, we are forced to recreate resource
+
+tfstate is very important file, we need to secure it
+
+clone terraform repo --> terraform apply
+duplicate resources or errors
+
+in colloboration environment we must main state file remotely. locking is also important, so that we can prevent parellel executions
+
+terraform.tfstate -- terraform state file
+.terraform.tfstate.lock.info -- local terraform lock file
+
+AWS S3 bucket  -- to store state file remotely and securely
+
+DynamoDB  -- for locking the state file
+create DynamoDB table with Partition Key as "LockID" other it will fail for other partition key
+backend block
+Default backend
+Terraform uses a backend called local by default. The local backend type stores state as a local file on disk.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 26
+-------------------------------------------------------------------------------------------------------------------------------------------------
