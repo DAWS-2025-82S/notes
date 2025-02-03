@@ -849,6 +849,8 @@ code reuse
 enforce standards and best practices
 centralised place to updates
 
+validation block to validate variables
+
 
 
 

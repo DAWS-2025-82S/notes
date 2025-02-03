@@ -16,6 +16,8 @@ multiple env using
 3. maintain different repos for diff environment
 lookup() -- function to lookup a value in map
 terraform modules
+validation block to validate variables
+
 
 
 Terraform resources
