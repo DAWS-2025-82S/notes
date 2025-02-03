@@ -10,6 +10,13 @@ create DynamoDB table with Partition Key as "LockID" other it will fail for othe
 dynamic blocks
 provisioners
 connection block -- to connect to the server created using connection details
+multiple env using
+1. tfvars
+2. workspaces
+3. maintain different repos for diff environment
+lookup() -- function to lookup a value in map
+terraform modules
+
 
 Terraform resources
 --------------------
@@ -161,7 +168,17 @@ Acquiring state lock. This may take a few moments...
 │ again. For most commands, you can disable locking with the "-lock=false"
 │ flag, but this is not recommended.
 
+---------------------------------------------------------
+terraform workspaces commands
+==============================
+terraform.workspace --variable--> prod
 
+terraform workspace new  <workspacename>--- to create new work space
+terraform workspace list -- to list workspaces
+
+terraform workspace select <workspacename>  --  to switch workspace
+terraform plan
+terraform apply -auto-approve
 
 check ec2 creation without security group
 check variables -var "varname1=value" 
