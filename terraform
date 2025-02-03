@@ -3,8 +3,13 @@ provider
 cidr_blocks
 output
 locals
+count base loop -- to loop list
+for_each loop -- to loop map
 backend block -- for s3 bucket and DynamoDB configuration to store and secure state file
-create DynamoDB table with Partition Key as "LockID" other it will fail for other partition kay
+create DynamoDB table with Partition Key as "LockID" other it will fail for other partition key
+dynamic blocks
+provisioners
+connection block -- to connect to the server created using connection details
 
 Terraform resources
 --------------------
@@ -21,8 +26,9 @@ aws_ami
 aws_vpc
 aws_instance
 
+-------------------------------------------------------------------------------------------------------------
 terraform commands
--------------------
+-------------------------------------------------------------------------------------------------------------
 terraform init   --- Downloads and install provider
 terraform fmt    --- format the files properly
 terraform validate --- validate the configuration
@@ -34,6 +40,11 @@ terraform destroy -auto-approve  --- to destroy resources without confirmation
 
 terraform show  --- Inspect the current state
 terraform state list ---  to list the resources in your project's state
+
+// By default terraform will load vars from *.auto.tfvars and terraform.tfvars files
+// If the file name  is different to load vars from different file name use -var-file=<filename> option
+// terraform plan -var-file=test.tfvars
+// terraform apply -var-file=test.tfvars
 
 command line var:
 -----------------
@@ -49,10 +60,23 @@ If you wish to attempt automatic migration of the state, use
 		terraform init -migrate-state
 If you wish to store the current configuration with no changes to the state, use 
 		terraform init -reconfigure
+		
+For dev:
 
+terraform init -backend-config=dev/backend.tf -reconfigure
+terraform plan -var-file=dev/dev.tfvars
+terraform apply -auto-approve -var-file=dev/dev.tfvars
+terraform destroy -auto-approve -var-file=dev/dev.tfvars
 
+For Prod:
+terraform init -backend-config=prod/backend.tf -reconfigure
+terraform plan -var-file=prod/prod.tfvars
+terraform apply -auto-approve -var-file=prod/prod.tfvars
+terraform destroy -auto-approve -var-file=prod/prod.tfvars		
+
+-------------------------------------------------------------------------------------------------------------
 variables
----------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 varaibles can be accessed by using
 var.<VariableName>
 
