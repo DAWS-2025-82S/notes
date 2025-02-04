@@ -7,3 +7,58 @@ Parameter store
 
 s3 bucket -- to store terraform lock file remotely instead of local
 DynamoDB  -- for locking the state file
+
+VPC
+CIDR - VPC has a number i.e.r CIDR
+CIDR --> Classless inter domain routing
+Subnet
+Public subnet -- will have route to the Internet gateway
+Internet Gateway igw --> to provide internet connection to VPC
+Private Subnet -- will NOT have route to the Internet gateway
+NAT Gateway  -- to provide internet access to servers in private subnet
+Elastic IP(static IP0 -- required for NAT Gateway creation
+
+IGW - if traffic coming internet to server --> ingress
+NAT - if server is sending traffic to internet --> egress
+
+
+
+VPC and subnets Creation
+---------------------------------------------------------------------------------
+create VPC with CIDR 10.0.0.0/16
+Create IGW(Internet gateway) and attach to VPC
+
+Create 2 public subnets in 2 regions i.e., 1a and 1b
+Create 2 private subnets in 2 regions
+Create 2 Database(private) subnets in 2 regions 
+Note: Private and Databse are private subnets only
+
+Create route table for public subnets with vpc and add public subnets
+Create route table for private subnets with vpc and add private subnets
+Create route table for Database subnets with vpc and add database subnets
+
+Edit public route table and add routes with 0.0.0.0/0 with Internet Gateway --- then only it will become public subnet
+public subnet will have route to the Internet gateway
+Private subnet will not have route to the Internet gateway
+
+Create Elastic IP(Static IP) for NAT Gateway
+Create NAT Gateway with Public Subnet and Elastic IP
+
+Edit private(Database) route table and add routes with 0.0.0.0/0 with NAT Gateway --- then only it will become private subnet
+
+subnets will automatically have access between them
+
+VPC --> 10.0.0.0/16
+IGW --> Attach to VPC
+Public subnets --> 10.0.1.0/24 10.0.2.0/24
+Public Subnets --> Public Route --> 0.0.0.0/0 --> IGW
+
+Private Subnets --> 10.0.11.0/24 10.0.12.0/24
+Private Subnets --> Private Route --> 0.0.0.0/0 --> NAT
+
+Database Subnets --> 10.0.21.0/24 10.0.22.0/24
+Database Subnets --> Database Route --> 0.0.0.0/0 --> NAT
+
+NAT --> if you want to enable egress internet to the servers in private subnet, you should create NAT gateway in public subnet and provide route to private subnets
+if traffic coming to server --> ingress
+if server is sending traffic to internet --> egress

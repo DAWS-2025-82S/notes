@@ -1,3 +1,7 @@
+https://www.terraform-best-practices.com/naming
+https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-change
+https://developer.hashicorp.com/terraform/language/style
+
 required_providers
 provider
 cidr_blocks
@@ -27,6 +31,7 @@ aws_security_group
 ingress
 egress
 aws_route53_record
+aws_vpc
 
 
 data sources
