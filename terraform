@@ -21,7 +21,7 @@ multiple env using
 lookup() -- function to lookup a value in map
 terraform modules
 validation block to validate variables
-
+slice function -- to get values from list
 
 
 Terraform resources
@@ -32,13 +32,21 @@ ingress
 egress
 aws_route53_record
 aws_vpc
-
+aws_internet_gateway
+aws_subnet
+aws_eip
+aws_nat_gateway
+aws_route_table
+aws_route
+aws_route_table_association
+aws_vpc_peering_connection
 
 data sources
 --------------
 aws_ami
 aws_vpc
 aws_instance
+aws_availability_zones
 
 -------------------------------------------------------------------------------------------------------------
 terraform commands
@@ -153,7 +161,7 @@ Initializing the backend...
 │ state, use "terraform init -reconfigure".
 
 ----------------------------------------------------------------------------------------------------------
-create DynamoDB table with Partition Key as "LockID" other it will fail for other partition key
+create DynamoDB table with Partition Key as "LockID" otherwise it will fail for other partition key
 -------------------------------------------------------------------------------------------------
 $ terraform apply -auto-approve
 Acquiring state lock. This may take a few moments...

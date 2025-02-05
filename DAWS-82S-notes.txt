@@ -851,7 +851,7 @@ centralised place to updates
 
 validation block to validate variables
 -------------------------------------------------------------------------------------------------------------------------------------------------
-session 27
+session 28
 -------------------------------------------------------------------------------------------------------------------------------------------------
 reusability
 maintainability
@@ -952,6 +952,8 @@ IPs for 10.0.1.0/24
 
 10.0.0.0/28 -- blocks 28 bits only 4 bits are available and we can have only 2power4i.e., 16 IP addresses
 
+192.145.34.56/32 -- means only one can be used
+
 NAT --> if you want to enable egress internet to the servers in private subnet, you should create NAT gateway in public subnet and provide route to private subnets
 if traffic coming to server --> ingress
 if server is sending traffic to internet --> egress
@@ -988,6 +990,56 @@ IP = N/W + Host ID
 
 dnf install mysql-server --> my EC2 is requesting internet to provide mysql-server
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 29
+-------------------------------------------------------------------------------------------------------------------------------------------------
+VPC --> CIDR
+Subnets
+	public
+	private
+	database
+IGW
+Route table
+	Public
+	Private
+	Database
+NAT
+Routes
+	Public --> 0.0.0.0/0 --> IGW
+	Private --> 0.0.0.0/0 --> NAT
+	Database --> 0.0.0.0/0 --> NAT
+	
+2 subnets
+data.aws_availability_zones.available.names
+
+[
+          + "us-east-1a",
+          + "us-east-1b",
+          + "us-east-1c",
+          + "us-east-1d",
+          + "us-east-1e",
+          + "us-east-1f",
+        ]
+
+Peering
+==========
+village-A pincode
+village-B pincode
+pins should be different. road should be there between 2 villages.
+
+by default 2 VPC in AWS are not connected.
+VPC peering is the way of connecting 2 VPC. CIDR should be different. Routes also should be there between 2 VPC route tables.
+
+same account, same region 2 VPC
+same account, different region VPC
+diff accounts, same region
+diff accounts, diff region
+
+expense-dev --> requestor
+default --> acceptor
+
+village-A --> village-B
+village-B pincode is the destinatio
 
 
 

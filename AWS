@@ -16,10 +16,14 @@ Public subnet -- will have route to the Internet gateway
 Internet Gateway igw --> to provide internet connection to VPC
 Private Subnet -- will NOT have route to the Internet gateway
 NAT Gateway  -- to provide internet access to servers in private subnet
-Elastic IP(static IP0 -- required for NAT Gateway creation
+Elastic IP(static IP) -- required for NAT Gateway creation
 
 IGW - if traffic coming internet to server --> ingress
 NAT - if server is sending traffic to internet --> egress
+route tables
+routes
+
+VPC peering
 
 
 
