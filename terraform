@@ -22,7 +22,8 @@ lookup() -- function to lookup a value in map
 terraform modules
 validation block to validate variables
 slice function -- to get values from list
-
+VPC
+referring  git terraform module
 
 Terraform resources
 --------------------
@@ -40,6 +41,8 @@ aws_route_table
 aws_route
 aws_route_table_association
 aws_vpc_peering_connection
+aws_ssm_parameter  -- to upload terrafrom output to centralised location
+aws_security_group_rule
 
 data sources
 --------------
@@ -47,6 +50,8 @@ aws_ami
 aws_vpc
 aws_instance
 aws_availability_zones
+aws_route_table
+
 
 -------------------------------------------------------------------------------------------------------------
 terraform commands
@@ -194,6 +199,14 @@ terraform workspace list -- to list workspaces
 terraform workspace select <workspacename>  --  to switch workspace
 terraform plan
 terraform apply -auto-approve
+
+referring  git terraform module instead of local
+-------------------------------
+    #source = "github.com/DAWS-2025-82S/10-terraform-aws-vpc"
+    source = "git::https://github.com/DAWS-2025-82S/10-terraform-aws-vpc.git?ref=main"
+
+to get module updates
+terraform get -update
 
 check ec2 creation without security group
 check variables -var "varname1=value" 

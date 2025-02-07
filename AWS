@@ -23,8 +23,8 @@ NAT - if server is sending traffic to internet --> egress
 route tables
 routes
 
-VPC peering
-
+VPC peering -- preferred if the VPC is in same account
+Transit Gateway -- preferred if the VPC is in different account or on premise
 
 
 VPC and subnets Creation
@@ -35,7 +35,7 @@ Create IGW(Internet gateway) and attach to VPC
 Create 2 public subnets in 2 regions i.e., 1a and 1b
 Create 2 private subnets in 2 regions
 Create 2 Database(private) subnets in 2 regions 
-Note: Private and Databse are private subnets only
+Note: Private and Database are private subnets only
 
 Create route table for public subnets with vpc and add public subnets
 Create route table for private subnets with vpc and add private subnets
@@ -51,6 +51,16 @@ Create NAT Gateway with Public Subnet and Elastic IP
 Edit private(Database) route table and add routes with 0.0.0.0/0 with NAT Gateway --- then only it will become private subnet
 
 subnets will automatically have access between them
+
+VPC peering connection
+-----------------------
+create peering connection with your vpc as requestor and default-vpc(Any other VPC) as acceptor
+Acceptor will accept the request
+
+update the routetable with destination as CIDR of acceptor i.e., default-vpc and Target as peering connection
+
+Similarly Update the Other VPC(default-vpc) route table also with our VPC CIDR
+
 
 VPC --> 10.0.0.0/16
 IGW --> Attach to VPC
