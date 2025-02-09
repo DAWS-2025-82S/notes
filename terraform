@@ -24,6 +24,8 @@ validation block to validate variables
 slice function -- to get values from list
 VPC
 referring  git terraform module
+join function
+split function
 
 Terraform resources
 --------------------

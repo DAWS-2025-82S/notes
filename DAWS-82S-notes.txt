@@ -1127,8 +1127,29 @@ resource "aws_security_group_rule" "example" {
 Our junior engineer developed a sg module with ingress rules from the user. Module users started using it, 
 for another requirement they added new firewall seperately. When they run module again our module deleted newly added rule. 
 So we decided not to add sg ingress rules in module development.
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 31
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Expense project infra setup using modules
 
+terraform list aws ssm parameter string list
+use join function  -- to convert
 
+We cannot connect to instances in private and database subnets from our local laptop because they will not have public IP
+to connect to them we have to use Bastion/jump host
+Bastion/jump host -- one instance in public subnet -- from this we can connect to private subnets
 
+From bastion connect using private ip
+ssh ec2-user@PrivateIP
 
+stringList ---to--> aws list
+string to list
+use split function
 
+Load Balancer
+Target Group
+
+AutoScaling
+Launch Template
+
+Load Balancer,Listener,Rule,Target Group,Instance

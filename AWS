@@ -25,6 +25,12 @@ routes
 
 VPC peering -- preferred if the VPC is in same account
 Transit Gateway -- preferred if the VPC is in different account or on premise
+Load Balancer
+Target Groups
+Listener
+Rule
+AutoScaling
+Launch Template
 
 
 VPC and subnets Creation
