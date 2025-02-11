@@ -82,3 +82,8 @@ Database Subnets --> Database Route --> 0.0.0.0/0 --> NAT
 NAT --> if you want to enable egress internet to the servers in private subnet, you should create NAT gateway in public subnet and provide route to private subnets
 if traffic coming to server --> ingress
 if server is sending traffic to internet --> egress
+
+
+To hit/access load balancer we need to allow bastion IP and port in Private(APP) Load balancer inbound security group rule
+But Bastion host IP may change so instead of bastion IP we will allow access from Bastion security group
+so all the instances with Bastion security group will have access to ALB irresepctive of IP

@@ -1,6 +1,7 @@
 https://www.terraform-best-practices.com/naming
 https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-change
 https://developer.hashicorp.com/terraform/language/style
+https://github.com/terraform-aws-modules/terraform-aws-alb  -- open source modules
 
 required_providers
 provider
@@ -26,6 +27,15 @@ VPC
 referring  git terraform module
 join function
 split function
+load balancer
+target group
+AutoScaling
+Launch template
+app load balancer
+terrafrom-aws-alb  --- opensource module
+Listener and Rules
+create listener with fixed response(Without target group)
+create alias of route 53 record for load balancer since LB will not have IP
 
 Terraform resources
 --------------------
@@ -45,6 +55,9 @@ aws_route_table_association
 aws_vpc_peering_connection
 aws_ssm_parameter  -- to upload terrafrom output to centralised location
 aws_security_group_rule
+terrafrom-aws-alb -- open source modules
+aws_lb_listener
+
 
 data sources
 --------------

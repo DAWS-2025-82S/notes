@@ -956,7 +956,8 @@ IPs for 10.0.1.0/24
 
 NAT --> if you want to enable egress internet to the servers in private subnet, you should create NAT gateway in public subnet and provide route to private subnets
 if traffic coming to server --> ingress
-if server is sending traffic to internet --> egress
+if server is se
+nding traffic to internet --> egress
 
 
 static(elastic) IP --> 1000
@@ -1135,6 +1136,10 @@ Expense project infra setup using modules
 terraform list aws ssm parameter string list
 use join function  -- to convert
 
+["subnet-76dghye567vf","subnet-76dghye567vf"] --> terraform(List)
+
+subnet-76dghye567vf,subnet-76dghye567vf --> AWS(StringList), Terraform(String)
+
 We cannot connect to instances in private and database subnets from our local laptop because they will not have public IP
 to connect to them we have to use Bastion/jump host
 Bastion/jump host -- one instance in public subnet -- from this we can connect to private subnets
@@ -1153,3 +1158,58 @@ AutoScaling
 Launch Template
 
 Load Balancer,Listener,Rule,Target Group,Instance
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 32
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ALB --> Listener --> Evaluate Rules --> target group --> server
+Application Load Balancer
+terraform aws_alb
+
+https://github.com/terraform-aws-modules/terraform-aws-alb    -- opensource modules
+Listener and Rules
+aws_lb_listener
+
+Project infra   -- infra that doesn't change ex: Load Balancer
+Application infra -- infra that changes frequently ex: ec2
+
+one time creation -- project infra
+
+stateful vs statless
+---------------------
+state means data
+
+database --- stateful
+frontend and backend -- stateless
+
+Access App Load balancer using Bastion host
+terraform aws security group rule
+
+aws_security_group_rule
+
+bastion host --> app ALB
+ALB SG Rule
+port no: 80 --> bastion host IP
+
+To hit/access load balancer we need to allow bastion IP and port in Private(APP) Load balancer inbound security group rule
+But Bastion host IP may change so instead of bastion IP we will allow access from Bastion security group
+so all the instances with Bastion security group will have access to ALB irresepctive of IP
+
+Hit the load balancer from bastion instance to check connectivity
+connect to Bastion from local and then
+curl http://<Loadbalancer DNS Names>
+
+create route53 record so that alb can be accessed without dns name
+
+*.app-dev.raj82s.online  -- route 53 record
+enable alias and then select load balancer
+
+curl http://backend.app-dev.raj82s.online
+curl http://something.app-dev.raj82s.online
+
+
+
+
+
+
+
+
