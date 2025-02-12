@@ -1299,6 +1299,47 @@ https://github.com/terraform-aws-modules/terraform-aws-rds
 
 Note: Mysql password in AWS should be ExpenseApp1 without @
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 34
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Architecture diagram with VPC,Availability Zones,subnets,Route Tables,Bastion,VPN,Load Balancer
+
+VPN server full automation including user setup and VPN server setup can be done automatically using user_data option
+This will avoid connecting to VPN server using below command and do user setup and VPN configuration
+ ssh -i Private_KEY  openvpnas@IP
+ 
+For rds(MYSQL) follow the steps below
+--------------------------------------
+Create aws_db_subnet_group group
+export it as aws ssm parameter
+Allow the access to DB(security group) from Bastion(Bastion security group)
+Allow the access to DB(security group) from VPN(VPN security group)
+create rds resource using open source rds module  "terraform-aws-modules/rds/aws"
+create  route 53 record
+
+HeidiSQL
+Install client tool HeidiSQL to connect MYSQL DB
+
+connect to DB using rds endpoint
+
+create  route 53 record since the endpoint is not user friendly
+create CNAME record since the rds endpoint is another domain
+
+expense-dev.raj82s.online
+
+For APP Load Balancer Alias Route 53 record(*.app-dev.raj82s.online) is created
+
+Destroy all resources
+----------------------
+rajas@ManDev MINGW64 /d/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev (main)
+$  ls -dr *
+50-app-alb/  40-rds/  30-vpn/  20-bastion/  10-sg/  00-vpc/
+
+for i in $(ls -dr *);do cd $i;terraform destroy -auto-approve;cd ..;done
+
+
+
+
 
 
 
