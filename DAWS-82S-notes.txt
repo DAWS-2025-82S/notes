@@ -1198,7 +1198,7 @@ Hit the load balancer from bastion instance to check connectivity
 connect to Bastion from local and then
 curl http://<Loadbalancer DNS Names>
 
-create route53 record so that alb can be accessed without dns name
+create route53 record so that alb can be accessed without load balancer dns name
 
 *.app-dev.raj82s.online  -- route 53 record
 enable alias and then select load balancer
@@ -1206,9 +1206,98 @@ enable alias and then select load balancer
 curl http://backend.app-dev.raj82s.online
 curl http://something.app-dev.raj82s.online
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 33
+-------------------------------------------------------------------------------------------------------------------------------------------------
+VPN setup
+VPN is forward proxy
+
+Instead of accessing resources in private subnets with Bastion we can setup VPN
+we can access http://backend.app-dev.raj82s.online only from Bastion
+To access from your local browser setup VPN
+
+VPN server setup should be done manually only but ec2 instance creation can be automated
+VPN server configuration will start when connect for the first time with user openvpnas
+The password can be configured with the setup for the first time
+
+Security Group for VPN Server
+ports 22, 443, 1194, 943 --> VPN ports
+22 -- for ssh access
+443 -- for access from browser
+1194 & 943 -- VPN internal ports
+security group rule for vpn to allow the ports
+
+openvpn access server community -- image for VPN server
+OpenVPN Access Server Community Image-fe8020db-5343-4c43-9e65-5ed4a825c931
+
+connect to VPN server from terminal using below:
+	ssh -i privatekey openvpnas@PublicIP
+	
+ssh -i D:/GitHub/DAWS-2025-82S/testvpnfromaws.pem openvpnas@52.91.49.147	
+
+	Note: Change the permission of pem file to 600 
+
+openvpnas -- VPN Server SSH Username
+
+VPN Client credentials
+----------------------
+openvpn
+Openvpn@123	
+
+To Access VPN server from browser and  connect to client
+--------------------------------------------------------
+You can now continue configuring OpenVPN Access Server by
+directing your Web browser to this URL:
+
+https://52.91.49.147:943/admin
+
+During normal operation, OpenVPN AS can be accessed via these URLs:
+Admin  UI: https://52.91.49.147:943/admin
+Client UI: https://52.91.49.147:943/
+To login please use the "openvpn" account with  the password you specified during the setup.
+
+OpenVPN Connect -- client software to connect to VPN server
+
+aws_key_pair
+file function -- to read file
+
+DB
+====
+on-premise
+
+DB installation
+DB upgrades
+DB backups
+DB changes
+DB Cluster setup
+DB restoration test
+
+RDS --> 1$/hours, multi-AZ(HA) 2$/hr
+
+DB subnet group --> group of DB subnets
+
+set up RDS(MYSQL) DB manually
+RDS(Mysql DB Setup) using AWS
+creating mysql db
+creating db subnet group with database subnets
+aws_db_subnet_group
+security group for backend(mysql DB)
+
+DB_HOST_URL: expense-dev.czn6yzxlcsiv.us-east-1.rds.amazonaws.com
+root
+ExpenseApp1
+3306
+
+connect RDS using Bastion
+--------------------------
+sudo dnf install mysql -y
+mysql -h DB_HOST_URL -u root -pExpenseApp1
 
 
+terraform-aws-rds
+https://github.com/terraform-aws-modules/terraform-aws-rds
 
+Note: Mysql password in AWS should be ExpenseApp1 without @
 
 
 

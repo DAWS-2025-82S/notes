@@ -25,12 +25,15 @@ routes
 
 VPC peering -- preferred if the VPC is in same account
 Transit Gateway -- preferred if the VPC is in different account or on premise
+Bastion 
 Load Balancer
 Target Groups
 Listener
 Rule
 AutoScaling
 Launch Template
+VPN
+RDS(Mysql DB Setup) using AWS
 
 
 VPC and subnets Creation

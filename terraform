@@ -2,6 +2,13 @@ https://www.terraform-best-practices.com/naming
 https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-change
 https://developer.hashicorp.com/terraform/language/style
 https://github.com/terraform-aws-modules/terraform-aws-alb  -- open source modules
+https://aws.amazon.com/marketplace/pp/prodview-y3m73u6jd5srk?applicationId=AWS-EC2-Console&ref_=beagle&sr=0-1
+https://openvpn.net/as-docs/aws-ec2.html#connect-to-your-new-ami-76631
+
+https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds  --- conatains steps to create resources
+https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance  -- syntax for the resources
+https://github.com/terraform-aws-modules/terraform-aws-rds -- open source module for resources
+
 
 required_providers
 provider
@@ -19,14 +26,14 @@ multiple env using
 1. tfvars
 2. workspaces
 3. maintain different repos for diff environment
-lookup() -- function to lookup a value in map
+lookup() -- function to lookup(get) a value in map
 terraform modules
 validation block to validate variables
 slice function -- to get values from list
 VPC
 referring  git terraform module
-join function
-split function
+join function -- convert list to string
+split function --- convert to list
 load balancer
 target group
 AutoScaling
@@ -36,6 +43,8 @@ terrafrom-aws-alb  --- opensource module
 Listener and Rules
 create listener with fixed response(Without target group)
 create alias of route 53 record for load balancer since LB will not have IP
+VPN
+file function -- to read file
 
 Terraform resources
 --------------------
@@ -57,7 +66,9 @@ aws_ssm_parameter  -- to upload terrafrom output to centralised location
 aws_security_group_rule
 terrafrom-aws-alb -- open source modules
 aws_lb_listener
-
+aws_key_pair --- to upload public key while creating new instance
+aws_db_subnet_group -- subnet group for RDS(MYSQL) DB creation
+terraform-aws-rds  -- to create rds(MYSQL) DB
 
 data sources
 --------------
