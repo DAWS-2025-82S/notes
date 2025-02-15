@@ -956,8 +956,7 @@ IPs for 10.0.1.0/24
 
 NAT --> if you want to enable egress internet to the servers in private subnet, you should create NAT gateway in public subnet and provide route to private subnets
 if traffic coming to server --> ingress
-if server is se
-nding traffic to internet --> egress
+if server is sending traffic to internet --> egress
 
 
 static(elastic) IP --> 1000
@@ -1307,6 +1306,8 @@ Architecture diagram with VPC,Availability Zones,subnets,Route Tables,Bastion,VP
 VPN server full automation including user setup and VPN server setup can be done automatically using user_data option
 This will avoid connecting to VPN server using below command and do user setup and VPN configuration
  ssh -i Private_KEY  openvpnas@IP
+
+user_data 
  
 For rds(MYSQL) follow the steps below
 --------------------------------------
@@ -1325,7 +1326,7 @@ connect to DB using rds endpoint
 create  route 53 record since the endpoint is not user friendly
 create CNAME record since the rds endpoint is another domain
 
-expense-dev.raj82s.online
+mysql-dev.raj82s.online
 
 For APP Load Balancer Alias Route 53 record(*.app-dev.raj82s.online) is created
 
@@ -1337,7 +1338,74 @@ $  ls -dr *
 
 for i in $(ls -dr *);do cd $i;terraform destroy -auto-approve;cd ..;done
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 35
+-------------------------------------------------------------------------------------------------------------------------------------------------
+new release
+=============
+1. remove old code
+2. download new code
+3. restart the server
 
+changes in existing servers
+============================
+20 servers --> downtime should be there
+
+connect to the servers using ansible
+fetch the ip using dynamic inventory
+run ansible playbook against all the servers
+
+another method
+============================
+provision new instance
+configure it using ansible
+	connect to it
+	run the playbook
+
+stop the instance
+take AMI
+
+update auto scaling group --> 5 old version application instances
+Rolling update
+provision one new instance with new AMI, delete one old version server
+provision second new instance with new AMI, delete second old version server
+.
+.
+provision fifth new instance with new AMI, delete fifth old version server
+
+Launch template --> instance creation inputs
+AMI
+SG ID
+Subnet
+Which target group
+
+null resource will not create any new resource, it is used to connect to the instances, copy the scripts, execute the scripts through provisioners.
+It has a trigger attribute to take actions when something is changed like instance id.
+ 
+Ansible pull
+ansible-pull  -i localhost, -U https://github.com/DAWS-2025-82S/15-expense-roles-terraform.git -e COMPONENT=backend -e ENVIRONMENT=$1
+
+file provisioner 
+
+terraform variables --> shell --> ansible
+nslookup.io
+
+1. instance creation
+2. connect to server using connection block
+3. copy the shell script into server using file provisioner block
+	install ansible
+	ansible-pull -i localhost -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
+4. remote-exec
+	chmod +x backend.sh
+	sudo sh backend.sh
+5. ansible configures backend
+6. stop instance
+7. take the AMI
+8. create target group
+9. launch template --> AMI
+10. ASG -->> launch template
+
+cat -A script.sh
 
 
 

@@ -9,7 +9,10 @@ https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds  --- conatains s
 https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance  -- syntax for the resources
 https://github.com/terraform-aws-modules/terraform-aws-rds -- open source module for resources
 
-
+ cd D:/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev
+ 
+  for i in $(ls -d *);do cd $i;terraform apply -auto-approve;cd ..;done
+ 
 Destroy all resources(Expense Infra)
 ----------------------
 rajas@ManDev MINGW64 /d/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev (main)
@@ -53,6 +56,14 @@ create listener with fixed response(Without target group)
 create alias of route 53 record for load balancer since LB will not have IP
 VPN
 file function -- to read file
+user_data
+ansible pull
+null_resource
+file provisioner -- to copy the file to the resource
+
+nslookup.io
+nslookup mysql-dev.raj82s.online
+
 
 Terraform resources
 --------------------
@@ -77,7 +88,7 @@ aws_lb_listener
 aws_key_pair --- to upload public key while creating new instance
 aws_db_subnet_group -- subnet group for RDS(MYSQL) DB creation
 terraform-aws-rds("terraform-aws-modules/rds/aws")  -- opensource module to create rds(MYSQL) DB
-
+null_resource
 
 data sources
 --------------
@@ -90,7 +101,7 @@ aws_route_table
 
 -------------------------------------------------------------------------------------------------------------
 terraform commands
--------------------------------------------------------------------------------------------------------------
+--------------------------null_resourcenull_resource-----------------------------------------------------------------------------------
 terraform init   --- Downloads and install provider
 terraform fmt    --- format the files properly
 terraform validate --- validate the configuration
@@ -246,3 +257,153 @@ terraform get -update
 check ec2 creation without security group
 check variables -var "varname1=value" 
 check renaming terraform.tfvars with different name
+
+check null resource provisioner
+
+
+
+
+
+
+__________________________________________________________________________________________________________________________________________________________________
+
+Getting error below while provisioning backend using terraform since VPN is required to connect 
+Sol: connect to VPN and run 60-backend again
+
+Plan: 2 to add, 0 to change, 0 to destroy.
+aws_instance.backend: Creating...
+aws_instance.backend: Still creating... [10s elapsed]
+aws_instance.backend: Creation complete after 16s [id=i-0f6a0e2a08295004b]
+null_resource.backend: Creating...
+null_resource.backend: Provisioning with 'file'...
+null_resource.backend: Still creating... [10s elapsed]
+null_resource.backend: Still creating... [20s elapsed]
+null_resource.backend: Still creating... [30s elapsed]
+null_resource.backend: Still creating... [40s elapsed]
+null_resource.backend: Still creating... [50s elapsed]
+null_resource.backend: Still creating... [1m0s elapsed]
+null_resource.backend: Still creating... [1m10s elapsed]
+null_resource.backend: Still creating... [1m20s elapsed]
+null_resource.backend: Still creating... [1m30s elapsed]
+null_resource.backend: Still creating... [1m40s elapsed]
+null_resource.backend: Still creating... [1m50s elapsed]
+null_resource.backend: Still creating... [2m0s elapsed]
+null_resource.backend: Still creating... [2m10s elapsed]
+null_resource.backend: Still creating... [2m20s elapsed]
+null_resource.backend: Still creating... [2m30s elapsed]
+null_resource.backend: Still creating... [2m40s elapsed]
+null_resource.backend: Still creating... [2m50s elapsed]
+null_resource.backend: Still creating... [3m0s elapsed]
+null_resource.backend: Still creating... [3m10s elapsed]
+null_resource.backend: Still creating... [3m20s elapsed]
+null_resource.backend: Still creating... [3m30s elapsed]
+null_resource.backend: Still creating... [3m40s elapsed]
+null_resource.backend: Still creating... [3m50s elapsed]
+null_resource.backend: Still creating... [4m0s elapsed]
+null_resource.backend: Still creating... [4m10s elapsed]
+null_resource.backend: Still creating... [4m20s elapsed]
+null_resource.backend: Still creating... [4m30s elapsed]
+null_resource.backend: Still creating... [4m40s elapsed]
+null_resource.backend: Still creating... [4m50s elapsed]
+╷
+│ Error: file provisioner error
+│
+│   with null_resource.backend,
+│   on main.tf line 30, in resource "null_resource" "backend":
+│   30:   provisioner "file" {
+│
+│ timeout - last error: dial tcp 10.0.11.164:22: i/o timeout
+╵
+Releasing state lock. This may take a few moments...
+
+-----------------------------------------------------------------------------------------------------------------------------------
+After connecting to VPN failed with error
+sol:
+1)If running a script, check for hidden characters:
+
+	cat -A backend.sh
+2)If you see \r, remove them using:
+ sed -i 's/\r//g' backend.sh
+
+Windows-style line endings (\r\n) in scripts
+
+If you're running a script on a Linux system that was created on Windows, it may have \r characters at the end of lines.
+Solution: Convert the script using dos2unix
+
+	dos2unix script.sh
+---------------------------------------------
+
+$ cat -A backend.sh
+#!/bin/bash^M$
+^M$
+dnf install ansible -y^M$
+# push^M$
+# ansible-playbook -i inventory mysql.yaml^M$
+^M$
+#pull^M$
+ansible-pull  -i localhost, -U https://github.com/joindevops-1/expense-ansible-roles-tf1.git main.yaml -e COMPONENT=backend -e ENVIRONMENT=$1
+
+
+
+----------------------------------------------
+
+null_resource.backend: Still creating... [10s elapsed]
+null_resource.backend (remote-exec): /tmp/backend.sh: line 2: $'\r': command not found
+null_resource.backend (remote-exec): usage: dnf [-c [config file]] [-q]
+null_resource.backend (remote-exec):            [-v] [--version]
+null_resource.backend (remote-exec):            [--installroot [path]]
+null_resource.backend (remote-exec):            [--nodocs] [--noplugins]
+null_resource.backend (remote-exec):            [--enableplugin [plugin]]
+null_resource.backend (remote-exec):            [--disableplugin [plugin]]
+null_resource.backend (remote-exec):            [--releasever RELEASEVER]
+null_resource.backend (remote-exec):            [--setopt SETOPTS]
+null_resource.backend (remote-exec):            [--skip-broken] [-h]
+null_resource.backend (remote-exec):            [--allowerasing]
+null_resource.backend (remote-exec):            [-b | --nobest] [-C]
+null_resource.backend (remote-exec):            [-R [minutes]]
+null_resource.backend (remote-exec):            [-d [debug level]]
+null_resource.backend (remote-exec):            [--debugsolver]
+null_resource.backend (remote-exec):            [--showduplicates]
+null_resource.backend (remote-exec):            [-e ERRORLEVEL]
+null_resource.backend (remote-exec):            [--obsoletes]
+null_resource.backend (remote-exec):            [--rpmverbosity [debug level name]]
+null_resource.backend (remote-exec):            [-y] [--assumeno]
+null_resource.backend (remote-exec):            [--enablerepo [repo]]
+null_resource.backend (remote-exec):            [--disablerepo [repo] |
+null_resource.backend (remote-exec):            --repo [repo]]
+null_resource.backend (remote-exec):            [--enable | --disable]
+null_resource.backend (remote-exec):            [-x [package]]
+null_resource.backend (remote-exec):            [--disableexcludes [repo]]
+null_resource.backend (remote-exec):            [--repofrompath [repo,path]]
+null_resource.backend (remote-exec):            [--noautoremove]
+null_resource.backend (remote-exec):            [--nogpgcheck]
+null_resource.backend (remote-exec):            [--color COLOR] [--refresh]
+null_resource.backend (remote-exec):            [-4] [-6]
+null_resource.backend (remote-exec):            [--destdir DESTDIR]
+null_resource.backend (remote-exec):            [--downloadonly]
+null_resource.backend (remote-exec):            [--comment COMMENT]
+null_resource.backend (remote-exec):            [--bugfix] [--enhancement]
+null_resource.backend (remote-exec):            [--newpackage] [--security]
+null_resource.backend (remote-exec):            [--advisory ADVISORY]
+null_resource.backend (remote-exec):            [--bz BUGZILLA]
+null_resource.backend (remote-exec):            [--cve CVES]
+null_resource.backend (remote-exec):            [--sec-severity {Critical,Important,Moderate,Low}]
+null_resource.backend (remote-exec):            [--forcearch ARCH]
+null_resource.backend (remote-exec): Command line error: argument -y/--assumeyes: ignored explicit argument '\r'
+null_resource.backend (remote-exec): /tmp/backend.sh: line 6: $'\r': command not found
+null_resource.backend (remote-exec): /tmp/backend.sh: line 8: ansible-pull: command not found
+╷
+│ Error: remote-exec provisioner error
+│
+│   with null_resource.backend,
+│   on main.tf line 35, in resource "null_resource" "backend":
+│   35:   provisioner "remote-exec" {
+│
+│ error executing "/tmp/terraform_589911068.sh": Process exited with status
+│ 127
+╵
+Releasing state lock. This may take a few moments...
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+
