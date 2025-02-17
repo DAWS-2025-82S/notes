@@ -9,9 +9,9 @@ https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds  --- conatains s
 https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance  -- syntax for the resources
 https://github.com/terraform-aws-modules/terraform-aws-rds -- open source module for resources
 
- cd D:/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev
+cd D:/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev
  
-  for i in $(ls -d *);do cd $i;terraform apply -auto-approve;cd ..;done
+for i in $(ls -d *);do cd $i;terraform apply -auto-approve;cd ..;done
  
 Destroy all resources(Expense Infra)
 ----------------------
@@ -89,6 +89,12 @@ aws_key_pair --- to upload public key while creating new instance
 aws_db_subnet_group -- subnet group for RDS(MYSQL) DB creation
 terraform-aws-rds("terraform-aws-modules/rds/aws")  -- opensource module to create rds(MYSQL) DB
 null_resource
+aws_ec2_instance_state -- to stop(control) ec2 instance
+aws_ami_from_instance -- to create AMI from ec2 instance
+aws_lb_target_group -- to create target group and health check block 
+aws_launch_template -- to create template with the image
+aws_autoscaling_group -- to create autoscaling group with launch template and target group
+aws_lb_listener_rule --- add listener rule to load balancer listener
 
 data sources
 --------------
@@ -262,7 +268,23 @@ check null resource provisioner
 
 
 
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+EC2 Autoscaling steps:
 
+1. instance creation
+2. connect to server using connection block
+3. copy the shell script into server using file provisioner block
+	install ansible
+	ansible-pull -i localhost -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
+4. remote-exec
+	chmod +x backend.sh
+	sudo sh backend.sh
+5. ansible configures backend
+6. stop instance
+7. take the AMI
+8. create target group
+9. launch template --> AMI
+10. ASG -->> launch template
 
 
 __________________________________________________________________________________________________________________________________________________________________
@@ -406,4 +428,15 @@ Releasing state lock. This may take a few moments...
 
 -----------------------------------------------------------------------------------------------------------------------------
 
-
+aws_autoscaling_group.backend: Still creating... [30s elapsed]
+aws_autoscaling_group.backend: Creation complete after 36s [id=expense-dev-backend]
+╷
+│ Warning: 'launch_template' always triggers an instance refresh and can be removed
+│
+│   with aws_autoscaling_group.backend,
+│   on main.tf line 126, in resource "aws_autoscaling_group" "backend":
+│  126:     triggers = ["launch_template"]
+│
+│ (and 2 more similar warnings elsewhere)
+╵
+Releasing state lock. This may take a few moments...

@@ -1164,6 +1164,9 @@ ALB --> Listener --> Evaluate Rules --> target group --> server
 Application Load Balancer
 terraform aws_alb
 
+In AWS load balancer we cannot create listener with fixed response from AWS (always have to provide target group)
+while it is possible in Terraform to provide fixed response(without target group)
+
 https://github.com/terraform-aws-modules/terraform-aws-alb    -- opensource modules
 Listener and Rules
 aws_lb_listener
@@ -1382,6 +1385,8 @@ Which target group
 null resource will not create any new resource, it is used to connect to the instances, copy the scripts, execute the scripts through provisioners.
 It has a trigger attribute to take actions when something is changed like instance id.
  
+Ansible environment specific variable files in roles
+ 
 Ansible pull
 ansible-pull  -i localhost, -U https://github.com/DAWS-2025-82S/15-expense-roles-terraform.git -e COMPONENT=backend -e ENVIRONMENT=$1
 
@@ -1406,7 +1411,44 @@ nslookup.io
 10. ASG -->> launch template
 
 cat -A script.sh
+sed -i 's/\r//g' backend.sh
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 36
+-------------------------------------------------------------------------------------------------------------------------------------------------
+If there are less environment specific variables then instead of environment specific files change the variable directly.
 
+To do healthcheck use the url below
+curl http://localhost:8080/health
+
+check the API endpoints
+allow the port 8080 for VPN
+curl http://PrivateIP:8080/transaction
+
+stop the ec2 instance
+aws_ec2_instance_state
+Create AMI from ec2 instance
+aws_ami_from_instance
+delete the stopped instance using aws cli
+
+create target group with target type as instances and 8080 port and health check-- without registering targets
+create launch template using AMI Image
+create auto scaling group with launch template and select the target group
+Dynamic scaling policy
+Attach target group to load balancer i.e., Add the Listener rule to the listener with condition
+host-header backend.app-dev.raj82s.online and select target group
+
+create security group from load balancer to backend on port 8080
+aws_lb_target_group
+
+http://backend.app-dev.raj82s.online/health
+http://backend.app-dev.raj82s.online/transaction
+
+With private IP use 8080 port and with domain use 80 since ALB listens on 80 port
+http://10.0.12.74:8080/transaction
+http://backend.app-dev.raj82s.online/transaction
+aws_launch_template
+aws_autoscaling_group
+aws_lb_listener_rule
 
 
 
