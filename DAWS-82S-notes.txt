@@ -1399,7 +1399,7 @@ nslookup.io
 2. connect to server using connection block
 3. copy the shell script into server using file provisioner block
 	install ansible
-	ansible-pull -i localhost -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
+	ansible-pull -i localhost, -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
 4. remote-exec
 	chmod +x backend.sh
 	sudo sh backend.sh
@@ -1449,6 +1449,112 @@ http://backend.app-dev.raj82s.online/transaction
 aws_launch_template
 aws_autoscaling_group
 aws_lb_listener_rule
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 37
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Backend Load Balancer and autoscaling -- recap
+
+DM, He listens to client, his manager, etc.
+DM --> Load balancer
+client --> port no 80 http
+Rules
+	*.app-dev.daws82s.online --> LB
+	fdhasdkfh.app-dev.daws82s.online --> Yes Iam LB (default fixed response)
+	http://backend.app-dev.daws82s.online --> forward that to backend target group
+	http://analytics.app-dev.daws82s.online --> forward that to analytics target group
+	health check
+		every 10sec
+		2 health success --> instance is healthy
+		2 health failure --> instance is failed
+		
+Autoscaling
+==============
+Terraform+Shell+Ansible+Autoscaling
+
+HR --> JD --> Which team?
+JD --> Launch template
+AMI --> updated latest version backend AMI
+
+install program runtime, create user, create app folder, download code, install dependencies, create sytemctl services, configure DB_URLS, restart application
+
+terraform --> Instance launch --> copy file using provisioner --> connected to instance through remote-exec --> run playbook
+
+stop the instance
+take AMI
+delete the instance
+
+create backend target group
+create launch template --> latest AMI ID, update launch template version
+ASG --> launch template latest version, instance refresh
+	rolling update
+	new instance create, old instance delete
+
+listener rule --> backend.app-dev.daws82s.online --> forward that to backend target group
+ASG Policy --> if AVG CPU Utilisation is crossing 70% create instances
+Scale out --> create new instances
+Scale in --> remove instances
+
+if instance id changes
+trigger provisoner
+stop instance
+take AMI
+
+launch template changes
+ASG instance refresh
+
+either host or context
+
+amazon.daws82s.online --> amazon
+daws82s.online/amazon --> path based or context based
+
+m.facebook.com --> mobile target group
+netbanking.icicibank.com
+corporatebanking.icicibank.com
+
+joindevops --> golden AMI
+
+backend
+	ansible+nodejs --> joindevops AMI + Ansible + nodejs
+shipping
+	ansible+java --> joindevops AMI + Ansible + java
+
+host or context based forwarding
+amazon.daws82s.online -- host
+daws82s.online/amazon -- path or context
+
+SSL/TLS certificates
+----------------------
+daws82s.online --> get certificates
+
+certificate authority --> verisign, letsencrypt
+
+.crt file --> domain, country, type of business, location, address, company name
+private key
+
+joindevops.com --> verisign
+browser sends data to servers using encrypted key, joindevops has private key so it can decrypt
+
+*.daws82s.online
+
+SSL termination -- after hitting the public ALB we will terminate SSL
+
+SSL certificate creation using AWS ACM
+certificate validation
+
+aws_acm_certificate  -- create ssl certificate
+aws_route53_record -- to confirm the owner of the domain
+aws_acm_certificate_validation -- validate certificate
+
+create frontend(public) Load balancer for frontend using SSL certificate
+security group for frontend(public) load balancer
+listener for frontend load balancer with fixed response
+create route 53 record for frontend ALB
+
+https://frontend-dev.raj82s.online:443  --- to get fixed response from frontend(public) ALB
+
+
+
+
 
 
 

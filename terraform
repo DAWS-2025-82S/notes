@@ -26,7 +26,7 @@ provider
 cidr_blocks
 output
 locals
-count base loop -- to loop list
+count based loop -- to loop list
 for_each loop -- to loop map
 backend block -- for s3 bucket and DynamoDB configuration to store and secure state file
 create DynamoDB table with Partition Key as "LockID" other it will fail for other partition key
@@ -60,6 +60,7 @@ user_data
 ansible pull
 null_resource
 file provisioner -- to copy the file to the resource
+ssl certificate creation and validation using ACM
 
 nslookup.io
 nslookup mysql-dev.raj82s.online
@@ -95,6 +96,9 @@ aws_lb_target_group -- to create target group and health check block
 aws_launch_template -- to create template with the image
 aws_autoscaling_group -- to create autoscaling group with launch template and target group
 aws_lb_listener_rule --- add listener rule to load balancer listener
+aws_acm_certificate  -- create ssl certificate
+aws_route53_record -- to confirm the owner of the domain
+aws_acm_certificate_validation -- validate certificate
 
 data sources
 --------------
@@ -107,7 +111,7 @@ aws_route_table
 
 -------------------------------------------------------------------------------------------------------------
 terraform commands
---------------------------null_resourcenull_resource-----------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
 terraform init   --- Downloads and install provider
 terraform fmt    --- format the files properly
 terraform validate --- validate the configuration
@@ -275,7 +279,7 @@ EC2 Autoscaling steps:
 2. connect to server using connection block
 3. copy the shell script into server using file provisioner block
 	install ansible
-	ansible-pull -i localhost -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
+	ansible-pull -i localhost, -U URL main.yaml -e COMPONENT=backend -e ENVIRONMENT=dev
 4. remote-exec
 	chmod +x backend.sh
 	sudo sh backend.sh
@@ -440,3 +444,24 @@ aws_autoscaling_group.backend: Creation complete after 36s [id=expense-dev-backe
 │ (and 2 more similar warnings elsewhere)
 ╵
 Releasing state lock. This may take a few moments...
+----------------------------------------------------------------------------------------------
+Deletion of AMI,target group and autoscaling failed when
+deregistration delay default value is 5 minutes
+and aws_autoscaling_group(auto scaling) timeout value is also 5 minutes
+
+to fix this change the deregistration delay of target group lesaa than timeout value
+change deregistration delay value to 60 seconds
+and auto scaling timeout value to 10 minutes
+----------------------------------------------------------------------------------------------
+null_resource won't trigger and instance won't delete if there is no triggers configuration
+for autoscaling concept
+
+resource "null_resource" "backend_delete" {
+
+  triggers = {
+    instance_id = aws_instance.backend.id
+  }
+  
+----------------------------------------------------------------------------------------------
+  
+  

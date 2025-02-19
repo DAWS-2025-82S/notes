@@ -36,6 +36,7 @@ AutoScaling
 Launch Template
 VPN
 RDS(Mysql DB Setup) using AWS
+ACM -- AWS certificate Manager
 
 
 VPC and subnets Creation
@@ -97,3 +98,10 @@ so all the instances with Bastion security group will have access to ALB irresep
 --------------------------------------------QUESTIONS-------------------------------------------------------------
 In AWS load balancer why we cannot create listener with fixed response from AWS (always have to provide target group)
 while it is possible in Terraform to provide fixed response(without target group)
+
+
+*.app-dev.daws82s.online --> BAckend ALB
+	fdhasdkfh.app-dev.daws82s.online --> Yes Iam LB (default fixed response)
+	http://backend.app-dev.daws82s.online --> forward that to backend target group
+	
+	
