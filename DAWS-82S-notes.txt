@@ -1553,8 +1553,178 @@ create route 53 record for frontend ALB
 https://frontend-dev.raj82s.online:443  --- to get fixed response from frontend(public) ALB
 
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 38 - 41 PENDING
+-------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 42
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Refer for full details - https://github.com/DAWS-82S/notes/blob/main/session-42.txt
+Physical Server vs VM vs Container
+Old enterprise vs Monolithic vs Microservices
+Docker
+Docker installation
+Adding user to the docker group
+
+docker install --> docker group created by default
+usermod -aG docker ec2-user
+logout and login
+
+VM --> AMI --> Instance
+Docker --> Image --> Container
+AMI ==> BaseOS + App runtime + User creation + Folder creation + config files + app code + dependency installation + start/restart app --> 2GB-4GB
+
+Image ==> Bare min OS(10MB-500MB) + App runtime + User creation + Folder creation + config files + app code + dependency installation + start/restart app --> 150 - 500MB
+
+docker images --> displays the images available
+
+docker pull image-name  --- to download latest image from dockerhub
+docker pull image-name:tag/version -- specific tag/version
+
+docker images -a -q -- to get all images ids
+docker rmi <Image-id/name> -- delete Image
+docker rmi `docker images -a -q` -- to delete all images
+
+
+docker ps --> displays running containers
+docker ps -a --> displays all containers(runnin+stopped)
+
+docker create <image> --> container will be created
+docker start <container-id> -- to start the created container
+docker rm <container-id>  -- delete stopped container
+docker rm -f <container-id> -- delete running container
+
+docker exec -it 1e74ed63d8d6 bash -- to connect to container and get  the interactive terminal/bash access
+ 
+docker pull + create + start == docker run
+docker run nginx
+docker run -d nginx -- to run container in detached mode
+
+Container will also have 65,535 ports
+docker run -p host-port:container-port  --- docker will open host port and forward request to container
+
+nginx
+======
+alpine OS + Install nginx --> nginx image
+
+cd /usr/share/nginx/html
+echo "I am fro Docker Container" > index.html
+
+docker inspect
+docker log
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 43
+-------------------------------------------------------------------------------------------------------------------------------------------------
+AWS EC2 instance for docker using terraform
+
+How to create custom docker images?
+
+Dockerfile --> used to create our custom images using instructions provided by docker
+
+RHEL9 == Centos9 == Almalinux9
+FROM
+======
+FROM <BASE-OS>:<version>
+
+docker build -t from:1.0.0 . -- build image
+
+docker build -t dath1/from:1.0.0 . -- build with docker hub username
+
+how to build docker image?
+
+docker build -t <image-name>:<version> . --> Dockerfile
+
+docker build -t <docker-hub-username>/<image-name>:<version> .
+
+docker login -u <username>
+
+docker push <image-name>:<version>
+
+RUN
+======
+RUN instruction used to install packages, configurations on top of base os. It executes at the time of image building
+
+docker build -t run:1.0.0 .
+docker run -d run:1.0.0 -- container will exit
+
+docker run -itd run:1.0.0 -- need to check
+docker ps
+
+CMD
+======
+systemctl will not work in containers.. /etc/systemd/system/*.service
+
+docker build -t cmd:1.0.0 .
+docker run -d cmd:1.0.0 -- container will not exit because of cmd command of nginx
+docker ps
+
+docker run -d -p 8080:80 cmd:1.0.0
+
+RUN vs CMD
+=========
+RUN instruction executes at the time of image building
+CMD instruction executes at the time of container creation
+
+COPY vs ADD
+=========
+COPY and ADD both copies the files to images. but ADD has 2 extra capabilities
+1. copying from directly from internet to the image
+2. extracts tar file directly into image
+
+docker build -t copy:1.0.0 .
+docker run -d -p 8080:80 copy:1.0.0
+docker ps
+
+docker build -t add:1.0.0 .
+docker run -d -p 8080:80 add:1.0.0
+docker ps
+
+
+LABEL -- adds metadata to the image but can be used in filteration
+
+docker build -t label:1.0.0 .
+docker images -f "LABEL=project=expense"
+
+EXPOSE -- let the users know/provide the info the ports container listens  but it will not open any port
+docker build -t expose:1.0.0 .
+docker inspect expose:1.0.0
+
+ENV -- sets the environment variables
+
+To check the env variables connect to container using exec command and give "env" command to list all environment variables
+
+docker build -t env:1.0.0 .
+docker run -d env:1.0.0  -- container will exit
+docker run -d env:1.0.0 sleep 30 -- use sleep to stop the container exit
+
+docker run -itd env:1.0.0 -- container will not exit
+docker exec -it e01aceb bash
+env
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 44
+-------------------------------------------------------------------------------------------------------------------------------------------------
+CMD vs ENTRYPOINT
+==================
+1. CMD instruction can be overriden
+2. You can't override ENTRYPOINT --> ping google.com ping facebook.com. If you try to override entrypoint it will not override, but it will append
+3. for best results we can use CMD and ENTRYPOINT together.
+4. We can mention command in ENTRYPOINT, default options/inputs can be supplied through CMD. User can always override default options.
+5. Only one CMD and one ENTRYPOINT should be used in Dockerfile
+
+USER -> set the user of container
+WORKDIR --> set the working directory of container/image
+
+ARG
+------
+1. ENV variables can be access at the image building and in container also
+2. ARG variables are only accessed inside image build, not in container
+3. ARG can be the first instruction only to provide the version for base image. It can't be useful after FROM instruction
+
+set the ARG value to ENV variable inside Dockerfile
 
 
 

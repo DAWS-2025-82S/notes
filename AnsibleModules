@@ -1,3 +1,18 @@
+[ ec2-user@ip-172-31-38-176 ~ ]$  ansible --version
+ansible [core 2.14.17]
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/home/ec2-user/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3.9/site-packages/ansible
+  ansible collection location = /home/ec2-user/.ansible/collections:/usr/share/ansible/collections
+  executable location = /usr/bin/ansible
+  python version = 3.9.18 (main, Jan  4 2024, 00:00:00) [GCC 11.4.1 20230605 (Red Hat 11.4.1-2)] (/usr/bin/python3)
+  jinja version = 3.1.2
+  libyaml = True
+
+34.229.116.146 | 172.31.38.176 | t3.micro | null
+[ ec2-user@ip-172-31-38-176 ~ ]$  python --version
+Python 3.9.18
+
 package
 unarchive
 service

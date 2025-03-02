@@ -1,0 +1,190 @@
+Docker version 28.0.1, build 068a01e
+
+DockerHub:
+
+Docker ID : dath1
+email : brajasekharreddy@chn.aithent.com
+password : DathHub12!@
+
+Docker installation
+Adding user to the docker group
+
+Install in RHEL 9
+------------------
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+
+sudo dnf install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+Install specific version
+-------------------------
+dnf list docker-ce --showduplicates | sort -r
+
+docker-ce.x86_64    3:28.0.1-1.el9    docker-ce-stable
+docker-ce.x86_64    3:28.0.0-1.el9    docker-ce-stable
+
+Install a specific version by its fully qualified package name, 
+which is the package name (docker-ce) plus the version string (2nd column), separated by a hyphen (-). For example, docker-ce-3:28.0.1-1.el9
+
+sudo dnf install docker-ce-<VERSION_STRING> docker-ce-cli-<VERSION_STRING> containerd.io docker-buildx-plugin docker-compose-plugin
+
+Install in Ubuntu
+--------------------
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+docker install --> docker group created by default
+	usermod -aG docker ec2-user
+logout and login
+If you're running Linux in a virtual machine, it may be necessary to restart the virtual machine for changes to take effect.
+
+You can also run the following command to activate the changes to groups:	
+
+newgrp docker 
+
+
+docker images --> displays the images available
+
+docker pull image-name  --- to download latest image from dockerhub
+docker pull image-name:tag/version -- specific tag/version
+
+docker images -a -q -- to get all images ids
+docker rmi <Image-id/name> -- delete Image
+docker rmi `docker images -a -q` -- to delete all images
+
+docker ps --> displays running containers
+docker ps -a --> displays all containers(runnin+stopped)
+docker ps -a -q -- get all containers ids
+
+docker ps -a --no-trunc  -- get see the full command executed
+
+
+docker create <image> --> container will be created
+docker create -p 90:80 nginx:alpine -- create container and expose port 90 which will map to 80 container port
+
+docker start <container-id> -- to start the created container
+docker stop <container-id> -- to stop the running container
+docker kill <container-id> -- to kill the running container
+
+docker pause <container-id> -- to pause the process in the running container
+docker unpause <container-id> -- to unpause the process in the running container
+
+
+docker rm <container-id>  -- delete stopped container
+docker rm -f <container-id> -- delete running container
+docker rm `docker ps -a -q` -- delete all containers
+ docker container prune -- delete all stopped containers
+
+docker exec -it 1e74ed63d8d6 bash -- to connect to container and get  the interactive terminal/bash access
+ 
+docker pull + create + start == docker run
+docker run nginx
+docker run -d nginx -- to run container in detached mode
+
+Container will also have 65,535 ports
+docker run -p host-port:container-port  --- docker will open host port and forward request to container
+
+docker inspect -- to get container details
+docker logs -- to check the container logs
+
+docker inspect <ImageName> -- to get image information
+------------------Ubuntu image--------------------
+ docker run -it ubuntu bash -- it will run ubuntu image and provide the bash command prompt
+ if you give exit the conatiner will also stop
+ to exit without stopping container with ubuntu iamge 
+ use CTRL+pq instead of exit
+ 
+ docker run -itd ubuntu  -- to run the container without stopping
+ 
+ The below commands will create container but container will not run
+ docker run ubuntu
+ docker run -d ubuntu
+ --------------------------------------------------------
+ 
+Pushing a Docker container image to Docker Hub🔗
+------------------------------------------------
+
+https://docs.docker.com/engine/reference/commandline/push/
+
+https://docs.docker.com/docker-hub/repos/
+
+docker login -u dath1  -- login to dockerhub 
+docker tag raj/ubuntu-nodejs dath1/ubuntu-nodejs  -- tag the image with dockerhub username or build with dockerhub username
+docker build -t <docker-hub-username>/<image-name>:<version> .
+
+docker push dath1/ubuntu-nodejs
+
+docker push dath1/ubuntu-nodejs:2
+
+TO push all tags
+-----------------
+ docker image push --all-tags dath1/ubuntu-nodejs
+
+----------------------------------------------------------------------------------------------------------------------------
+docker build -t from:1.0.0 . -- build image
+
+docker build -t dath1/from:1.0.0 . -- build with docker hub username
+
+RUN
+======
+RUN instruction used to install packages, configurations on top of base os. It executes at the time of image building
+
+container will exit if the command is "/bin/bash"
+To run the container continuously wihout exit we have to provide the command using CMD instruction
+
+docker build -t run:1.0.0 .
+docker run -d run:1.0.0 -- container will exit
+
+docker run -itd run:1.0.0 -- need to check
+docker ps
+
+CMD
+======
+systemctl will not work in containers.. /etc/systemd/system/*.service
+
+docker build -t cmd:1.0.0 .
+docker run -d cmd:1.0.0 -- container will not exit because of cmd command of nginx
+docker ps
+
+docker run -d -p 8080:80 cmd:1.0.0
+
+Container will also have 65,535 ports
+
+RUN vs CMD
+=========
+RUN instruction executes at the time of image building
+CMD instruction executes at the time of container creation
+
+COPY vs ADD
+=========
+COPY and ADD both copies the files to images. but ADD has 2 extra capabilities
+1. copying from directly from internet to the image
+2. extracts tar file directly into image
+
+docker build -t copy:1.0.0 .
+docker run -d -p 8080:80 copy:1.0.0
+docker ps
+
+docker build -t add:1.0.0 .
+docker run -d -p 8080:80 add:1.0.0
+docker ps
+
+LABEL -- adds metadata to the image but can be used in filteration
+
+docker build -t label:1.0.0 .
+docker images -f "LABEL=project=expense"
+
+EXPOSE -- let the users know/provide the info the ports container listens  but it will not open any port
+docker build -t expose:1.0.0 .
+docker inspect expose:1.0.0
+
+ENV -- sets the environment variables
+
+To check the env variables connect to container using exec command and give "env" command to list all environment variables
+
+docker build -t env:1.0.0 .
+docker run -d env:1.0.0  -- container will exit
+docker run -d env:1.0.0 sleep 30 -- use sleep to stop the container exit
+
+docker run -itd env:1.0.0 -- container will not exit
+docker exec -it e01aceb bash
+env

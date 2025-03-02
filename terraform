@@ -1,3 +1,12 @@
+$ terraform --version
+Terraform v1.10.5
+on windows_386
++ provider registry.terraform.io/hashicorp/aws v5.84.0
+
+Your version of Terraform is out of date! The latest version
+is v1.11.0. You can update by downloading from https://www.terraform.io/downloads.html
+
+
 https://www.terraform-best-practices.com/naming
 https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-change
 https://developer.hashicorp.com/terraform/language/style
@@ -357,6 +366,8 @@ If you're running a script on a Linux system that was created on Windows, it may
 Solution: Convert the script using dos2unix
 
 	dos2unix script.sh
+	
+other sol: In Visual Studio select LF at the bottom of the visual studio	
 ---------------------------------------------
 
 $ cat -A backend.sh
