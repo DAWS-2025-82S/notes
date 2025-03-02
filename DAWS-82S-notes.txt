@@ -1650,7 +1650,7 @@ RUN instruction used to install packages, configurations on top of base os. It e
 docker build -t run:1.0.0 .
 docker run -d run:1.0.0 -- container will exit
 
-docker run -itd run:1.0.0 -- need to check
+docker run -itd run:1.0.0 -- container will not exit
 docker ps
 
 CMD
@@ -1715,8 +1715,25 @@ CMD vs ENTRYPOINT
 4. We can mention command in ENTRYPOINT, default options/inputs can be supplied through CMD. User can always override default options.
 5. Only one CMD and one ENTRYPOINT should be used in Dockerfile
 
-USER -> set the user of container
+docker build -t entry:1.0.0 .
+docker run entry:1.0.0 ping facebook.com
+
+docker build -t entry:1.0.0 . -f entry-1.Dockerfile
+docker run entry:1.0.0
+docker ps -a --no-trunc
+docker run entry:1.0.0 ping facebook.com
+
+
+USER -> set the user of container -- this will not give the root user access
+docker build -t user:1.0.0 .
+docker run -d user:1.0.0
+
 WORKDIR --> set the working directory of container/image
+
+docker build -t work:1.0.0 .
+docker run -d work:1.0.0
+
+# docker build -t work:1.0.0 . --debug --no-cache --progress=plain
 
 ARG
 ------
@@ -1725,6 +1742,15 @@ ARG
 3. ARG can be the first instruction only to provide the version for base image. It can't be useful after FROM instruction
 
 set the ARG value to ENV variable inside Dockerfile
+
+docker build -t arg:1.0.0  . -f 02-ARG.Dockerfile
+docker run -d arg:1.0.0  .
+
+ to override the ARG in docker file use --build-arg
+docker build -t arg:1.0.0 --progress=plain --no-cache --build-arg USERNAME=TestUser . -f 02-ARG.Dockerfile
+
+
+
 
 
 

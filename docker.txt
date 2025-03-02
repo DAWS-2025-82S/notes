@@ -3,8 +3,8 @@ Docker version 28.0.1, build 068a01e
 DockerHub:
 
 Docker ID : dath1
-email : brajasekharreddy@chn.aithent.com
-password : DathHub12!@
+brajasekharreddy@chn.aithent.com
+DathHub12!@
 
 Docker installation
 Adding user to the docker group
@@ -72,6 +72,8 @@ docker unpause <container-id> -- to unpause the process in the running container
 docker rm <container-id>  -- delete stopped container
 docker rm -f <container-id> -- delete running container
 docker rm `docker ps -a -q` -- delete all containers
+docker rm -f `docker ps -a -q` -- delete all containers
+
  docker container prune -- delete all stopped containers
 
 docker exec -it 1e74ed63d8d6 bash -- to connect to container and get  the interactive terminal/bash access
@@ -124,6 +126,8 @@ docker build -t from:1.0.0 . -- build image
 
 docker build -t dath1/from:1.0.0 . -- build with docker hub username
 
+docker build -t from:1.0.0 . -f Test.Dockerfile -- with different docker file name
+
 RUN
 ======
 RUN instruction used to install packages, configurations on top of base os. It executes at the time of image building
@@ -134,7 +138,7 @@ To run the container continuously wihout exit we have to provide the command usi
 docker build -t run:1.0.0 .
 docker run -d run:1.0.0 -- container will exit
 
-docker run -itd run:1.0.0 -- need to check
+docker run -itd run:1.0.0 -- container will not exit
 docker ps
 
 CMD
@@ -188,3 +192,58 @@ docker run -d env:1.0.0 sleep 30 -- use sleep to stop the container exit
 docker run -itd env:1.0.0 -- container will not exit
 docker exec -it e01aceb bash
 env
+
+CMD vs ENTRYPOINT
+==================
+1. CMD instruction can be overriden
+2. You can't override ENTRYPOINT --> ping google.com ping facebook.com. If you try to override entrypoint it will not override, but it will append
+3. for best results we can use CMD and ENTRYPOINT together.
+4. We can mention command in ENTRYPOINT, default options/inputs can be supplied through CMD. User can always override default options.
+5. Only one CMD and one ENTRYPOINT should be used in Dockerfile
+
+docker build -t entry:1.0.0 .
+docker run entry:1.0.0 ping facebook.com
+
+docker build -t entry:1.0.0 . -f entry-1.Dockerfile
+docker run entry:1.0.0
+docker ps -a --no-trunc
+docker run entry:1.0.0 ping facebook.com
+
+
+USER -> set the user of container -- this will not give the root user access
+docker build -t user:1.0.0 .
+docker run -d user:1.0.0
+
+WORKDIR --> set the working directory of container/image
+
+docker build -t work:1.0.0 .
+docker run -d work:1.0.0
+
+# docker build -t work:1.0.0 . --debug --no-cache --progress=plain
+
+ARG
+------
+1. ENV variables can be access at the image building and in container also
+2. ARG variables are only accessed inside image build, not in container
+3. ARG can be the first instruction only to provide the version for base image. It can't be useful after FROM instruction
+
+set the ARG value to ENV variable inside Dockerfile
+
+docker build -t arg:1.0.0  . -f 02-ARG.Dockerfile
+docker run -d arg:1.0.0  .
+
+ to override the ARG in docker file use --build-arg
+docker build -t arg:1.0.0 --progress=plain --no-cache --build-arg USERNAME=TestUser . -f 02-ARG.Dockerfile
+
+The ARG before FROM can be accessed in FROM only and it cannot be accessed after FROM
+
+docker build -t arg:1.0.0 --progress=plain --no-cache --build-arg USERNAME=TestUser --build-arg version=8 . -f 03-ARG.Dockerfile
+
+ To access the ARG value inside container set the ARG value to ENV variable inside Dockerfile
+
+docker build -t work:1.0.0 . --debug --no-cache --progress=plain
+---------Docker Questions---------------------------------------------------------------------------------------------
+cd command with RUN instruction failed we have to use use WORKDIR
+How to find the image created has issues
+
+
