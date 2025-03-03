@@ -460,7 +460,7 @@ Deletion of AMI,target group and autoscaling failed when
 deregistration delay default value is 5 minutes
 and aws_autoscaling_group(auto scaling) timeout value is also 5 minutes
 
-to fix this change the deregistration delay of target group lesaa than timeout value
+to fix this change the deregistration delay of target group less than timeout value
 change deregistration delay value to 60 seconds
 and auto scaling timeout value to 10 minutes
 ----------------------------------------------------------------------------------------------

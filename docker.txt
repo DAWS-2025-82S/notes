@@ -41,6 +41,21 @@ You can also run the following command to activate the changes to groups:
 
 newgrp docker 
 
+Docker file instructions
+-------------------------
+FROM --> should be the first instruction to represent base OS
+RUN --> Used to configure or install packages
+CMD --> executes at the time of container creation, this command should container running infinite time
+COPY --> copies from local workspace to image
+ADD --> same as copy but 2 extra capabilities, directly downloads from internet or untar directly
+LABEL --> adds metadata, used for filter. key value pairs
+EXPOSE --> doc purpose, tell the users about ports opened by container
+ENV --> sets the env variables in the container, we can use at build time also
+ENTRYPOINT --> cant' override, CMD can provide default args, we can always override default args
+USER --> set the user to run container
+WORKDIR --> sets the working directory for container/image
+ARG --> build time variables, in an exceptional case can be first instruction to supply base os version
+
 
 docker images --> displays the images available
 
@@ -240,6 +255,122 @@ The ARG before FROM can be accessed in FROM only and it cannot be accessed after
 docker build -t arg:1.0.0 --progress=plain --no-cache --build-arg USERNAME=TestUser --build-arg version=8 . -f 03-ARG.Dockerfile
 
  To access the ARG value inside container set the ARG value to ENV variable inside Dockerfile
+ 
+
+ONBUILD
+=======
+we can set some conditions when some user is using our image
+
+nginx --> alamlinux:9, install nginx, removes index.html
+
+we will force the users to keep index.html in their workspace for mandatory
+
+docker build -t onbuild:1.0.0 .
+docker build -t onbuild-test:1.0.0 .
+
+Expense Project setup using docker
+----------------------
+set up mysql 
+------------
+Use mysql official image 8.0 version
+
+https://hub.docker.com/_/mysql
+
+Download the script from expense documentation link and add it in project 18-expense-docker
+
+docker build -t mysql:1.0.0 .
+docker run -d --name mysql mysql:1.0.0
+
+ifconfig
+
+docker exec -it mysql bash
+mysql -u root -pExpenseApp@1
+show databases;
+use transactions;
+show tables;
+
+For each modem there is Ip address and ISP provides external IP and the modem will assign a Ip address for each device connected to it
+
+ifconfig
+
+Similarly at the time of docker installation docker creates its own network and docker creates virtual modem and it has Ip address 
+and it will assgin a Ip for each container
+
+# ifconfig
+# docker inspect mysql  # to get container IP
+
+setup backend i.e., nodejs app
+-------------------------------
+Download the code from expense documentation link and add it in project 18-expense-docker
+
+# set DB_HOST="msql container name" because the container IP changes if contianer is restarted
+
+docker build -t backend:1.0.0 .
+docker run -d --name backend backend:1.0.0
+
+backend app cannot connect to mysql DB because of docker default network 
+
+if you are using default n/w docker containers can't communicate with each other
+
+For containers to communicate we need to create network 
+
+docker network create expense
+docker network ls
+
+There are 2 types of nettworks in docker bridge and host
+default network is bridge
+
+disconnect the containers from default network and add them to the network created
+
+docker network disconnect <NetworkName> <ContainerName>
+docker network connect <NetworkName> <ContainerName>
+
+docker network disconnect bridge mysql
+docker network connect expense mysql
+
+ifconfig
+
+[ ec2-user@ip-172-31-43-15 ~/18-expense-docker/02-backend ]$ ifconfig
+br-c54a2cf8ef81: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
+        inet 172.18.0.1  netmask 255.255.0.0  broadcast 172.18.255.255
+        ether 1a:d9:f9:a8:33:d6  txqueuelen 0  (Ethernet)
+        RX packets 3  bytes 126 (126.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 27  bytes 1910 (1.8 KiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+docker0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.1  netmask 255.255.0.0  broadcast 172.17.255.255
+        inet6 fe80::6ca0:7cff:fec3:611  prefixlen 64  scopeid 0x20<link>
+        ether 6e:a0:7c:c3:06:11  txqueuelen 0  (Ethernet)
+        RX packets 1121  bytes 145802 (142.3 KiB)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 1207  bytes 3997435 (3.8 MiB)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+		
+docker0 -- network created by docker at the time of installation
+br-c54a2cf8ef81 -- network created with "docker network create" command	
+
+docker rm backend
+docker run -d --name backend --network expense backend:1.0.0  # run the container with expense network
+docker inspect backend
+
+docker exec -it backend bash
+telnet mysql 3306
+
+set up frontend
+----------------
+Download the code from expense documentation link and add it in project 18-expense-docker
+
+docker build -t frontend:1.0.0 .
+docker run -d -p 80:80 --name frontend --network expense frontend:1.0.0
+
+docker exec -it frontend bash
+cat /etc/nginx/nginx.conf
+
+
+
+
 
 docker build -t work:1.0.0 . --debug --no-cache --progress=plain
 ---------Docker Questions---------------------------------------------------------------------------------------------

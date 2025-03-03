@@ -1,6 +1,6 @@
 https://docs.aws.amazon.com/cli/latest/userguide/cli-services-ec2-instances.html
 
-sudo less /var/lo/cloud-init.log -- to check any issues while creating VM like user-data failures
+sudo less /var/log/cloud-init.log -- to check any issues while creating VM like user-data failures
 
 AWS account using N-virginia
 allow-all security group
@@ -39,6 +39,9 @@ Launch Template
 VPN
 RDS(Mysql DB Setup) using AWS
 ACM -- AWS certificate Manager
+
+how to resize aws ebs volumes
+EBS
 
 
 VPC and subnets Creation
