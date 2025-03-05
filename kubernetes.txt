@@ -1,0 +1,142 @@
+eksctl -- AWS command line tool to create and manage EKS cluster 
+For real projects terraform is used to create EKS cluster
+eksctl installation -- For cluster creation
+kubectl installation  -- For cluster  interaction
+We wiil use same EC2 instance used for docker to setup eksctl,kubectl
+
+https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html
+https://eksctl.io/installation/
+
+https://github.com/eksctl-io/eksctl/blob/main/examples/01-simple-cluster.yaml
+
+sudo tail -f /var/log/cloud-init-output.log -- to check user data output
+
+https://kubernetes.io/  -- official doc and can be used for CKA exam
+
+eksctl installation
+-------------------
+curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.32.0/2024-12-20/bin/linux/amd64/kubectl.sha256
+chmod +x ./kubectl
+sudo mv kubectl /usr/local/bin/kubectl
+
+# for ARM systems, set ARCH to: `arm64`, `armv6` or `armv7`
+ARCH=amd64
+PLATFORM=$(uname -s)_$ARCH
+curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_$PLATFORM.tar.gz"
+# (Optional) Verify checksum
+curl -sL "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_checksums.txt" | grep $PLATFORM | sha256sum --check
+tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz
+sudo mv /tmp/eksctl /usr/local/bin
+
+From ExampleConfigs select simple cluster
+
+https://github.com/eksctl-io/eksctl/blob/main/examples/01-simple-cluster.yaml
+
+eks.yaml in 16-Docker -- To create cluster
+
+eksctl create cluster --config-file=eks.yaml
+eksctl delete cluster --config-file=eks.yaml
+
+aws configure
+
+AWS cloudformation -- Just like terraform infra as code - AWS native service - will create resouces for cluster
+
+kubectl get nodes -- to get the no of nodes in the cluster
+
+namespace 
+---------- 
+isolated project space similar to VPC where you can control resources to your project
+
+default namespace is created along with cluster creation
+
+kubectl get namespace -- to get the namespaces
+
+Kind -- kind of resource
+apiVersion  -- kubernetes version
+metadata 
+  name -- resource name
+  
+spec used for other resouces 
+
+kubectl create -f 01-namespace.yaml -- will throw error if the resource alrady exists
+kubectl apply -f 01-namespace.yaml  -- will throw warning not error if the resource alrady exists
+kubectl delete -f 01-namespace.yaml -- delete the resource
+
+
+pod
+====
+docker --> image --> container
+k8s    --> image --> pod
+
+pod vs container
+----------------
+pod is the smallest deployable unit in k8s .pod can have multiple containers
+all conatiners in pod share the same ip and storage
+multiple containers are useful in few applications like shipping the logs through sidecars
+
+kubectl apply -f 02-pod.yaml
+kubectl get pods -- to get the list of pods
+kubectl get pods -n <namespace> -- to get the list of pods in namespace
+
+kubectl exec -it <pod-name -- bash
+kubectl exec -it nginx -- bash  # To connect to pod
+
+kubectl apply -f 03-multicontainer.yaml
+kubectl get pods
+CrashLoopBackOff -- error when failed to create container
+
+kubectl pod describe <pod-name>  -- to get the details of pod like which container is failing  in a pod
+
+# If one container failed we need to delete the pod and create it again
+kubectl delete -f 03-multicontainer.yaml
+
+kubectl exec -it <pod-name> -- bash
+
+kubectl exec -it multi-containers -- bash
+
+curl  localhost
+
+By default it will connect to first container
+To connect to second contianer
+
+kubectl exec -it <pod-name> -c <container-name> -- bash
+
+kubectl exec -it multi-containers -c almalinux -- bash
+
+curl localhost
+
+curl output will be same because "all conatiners in pod share the same ip and storage"
+
+pod or container is ephemeral
+
+when pod is deleted application logs created by first container will also get deleted 
+so we will create second container(sidecar container) to push the logs to ELK to reduce the load on first container
+
+labels
+-------
+labels are used to provide metadata and can be used to attach other resources
+
+kubectl apply -f 04-labels.yaml
+
+annotations
+------------
+annotations are similar to labels 
+labels can be used to select internal resources 
+annotations can be used to select external resources
+also in annotations we can give special characters and used in ingress controller
+special characters cannot be used in labels
+
+kubectl apply -f 05-annotations.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+

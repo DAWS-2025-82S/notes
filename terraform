@@ -209,6 +209,10 @@ output "instance_info" {
   }
 }
 
+
+sudo tail -f /var/log/cloud-init-output.log -- to check user data output
+
+
 when changed backend configuration
 rajas@ManDev MINGW64 /d/GitHub/DAWS-2025-82S/repos/06-terraform/07-remote-state (main)
 $   terraform init
