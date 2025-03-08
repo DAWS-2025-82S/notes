@@ -52,6 +52,10 @@ On demand instances
 spot instnaces
 reserved instances
 
+ondemand --> creating server on the spot, high cost
+reserved --> cost is less because you are reserving for longterm
+spot --> 70-90% discount hardware available now...when our customers require we will take back your hardware with 2min notice.
+
 AWS cloudformation -- Just like terraform infra as code - AWS native service - will create resouces for cluster
 
 

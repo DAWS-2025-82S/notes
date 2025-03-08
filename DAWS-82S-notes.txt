@@ -1874,6 +1874,12 @@ session 48
 -------------------------------------------------------------------------------------------------------------------------------------------------
 Kubernetes
 
+1. create one linux server as workstation
+2. install docker to build images
+3. run aws configure to provide authentication
+4. install eksctl to create and manage EKS cluster
+5. install kubectl to work with eks cluster
+
 EKS cluster creation
 
 We wiil use same EC2 instance used for docker to setup eksctl,kubectl
@@ -1896,8 +1902,12 @@ AWS cloudformation -- Just like terraform infra as code - AWS native service - w
 3 types of instances in AWS
 ---------------------------
 On demand instances
-spot instnaces
+spot instances
 reserved instances
+
+ondemand --> creating server on the spot, high cost
+reserved --> cost is less because you are reserving for longterm
+spot --> 70-90% discount hardware available now...when our customers require we will take back your hardware with 2min notice.
 
 kubectl get nodes -- to get the no of nodes in the cluster
 
@@ -1917,8 +1927,8 @@ metadata
   
 spec used for other resouces  
 
-kubectl create -f 01-namespace.yaml -- will throw error if the resource alrady exists
-kubectl apply -f 01-namespace.yaml  -- will throw warning not error if the resource alrady exists
+kubectl create -f 01-namespace.yaml -- will throw error if the resource already exists
+kubectl apply -f 01-namespace.yaml  -- will throw warning not error if the resource already exists
 kubectl delete -f 01-namespace.yaml -- delete the resource
 
 pod
@@ -1936,7 +1946,7 @@ kubectl apply -f 02-pod.yaml
 kubectl get pods -- to get the list of pods
 kubectl get pods -n <namespace> -- to get the list of pods in namespace
 
-kubectl exec -it <pod-name -- bash
+kubectl exec -it <pod-name> -- bash
 kubectl exec -it nginx -- bash  # To connect to pod
 
 kubectl apply -f 03-multicontainer.yaml
@@ -1986,7 +1996,151 @@ special characters cannot be used in labels
 
 kubectl apply -f 05-annotations.yaml
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 49
+-------------------------------------------------------------------------------------------------------------------------------------------------
+env
+To set environment variables
+kubectl apply -f 06-env.yaml
+kubectl exec -it env -- bash
+# env
 
+resources
+ requests
+ limits
+sets the min and max RAM and CPU for container        
+kubectl apply -f 07-resources.yaml
+kubectl top pod  --- to check the resources consumed by pod
 
+ConfigMap
+  data
+To provide configurations as env variables
+
+kubectl apply -f 08-config-map.yaml
+kubectl get configmap
+kubectl describle configmap myconfig
+
+Referring ConfigMap to set as env variables
+
+envFrom
+ configMapRef
+
+ kubectl apply -f 09-pod-config.yaml
+ kubectl exec -it pod-config -- bash  
+ env
+ 
+ Update config map data and restart pod
+kubectl apply -f 08-config-map.yaml
+
+ kubectl delete -f 09-pod-config.yaml
+ kubectl apply -f 09-pod-config.yaml
+ kubectl exec -it pod-config -- bash  
+ env
+
+secrets
+ data
+secret types
+  opaque
+  
+$  echo -n "testsecret" | base64
+dGVzdHNlY3JldA==
+
+$ echo "dGVzdHNlY3JldA==" | base64 --decode
+testsecret
+kubectl apply -f 10-secret.yaml
+kubectl get secret
+kubectl describe secret dotfile-secret
+
+Referring secret to set as env variables
+
+envFrom
+ secretRef
+
+ kubectl apply -f 11-pod-secret.yaml
+ kubectl exec -it pod-secret -- bash  
+ env 
+ 
+Service
+=========
+service is used for 
+1. load balancing
+2. pod to pod communication
+3. as DNS between pods
+
+Ip address of pod will changes after deletion and creation of pod
+Instead of IP we will create service to access the pod or pod to pod communication with service name
+
+service will be cretad with clusterip
+kubectl delete pods --all --all-namespaces   -- to delete all pods
+
+kubectl apply -f 12-service.yaml
+
+kubectl get svc --- to get service info -- gives cluster IP and also node port
+
+kubectl get pod -o wide -- to get pod ip and also the node where pod is running
+
+start other container to check service access from other container
+
+kubectl apply -f 03-multicontainer.yaml
+
+kubectl exec -it multi-containers -- bash
+
+then curl <servicename>
+
+curl nginx
+
+apt update
+apt install dnsutils -y
+
+nslookup nginx
+
+multi-container --> curl nginx --> 
+3 types of services
+1. cluster IP --> default, only works internally i.e., pod to pod
+2. NodePort --> external requests
+3. LoadBalancer --> only works with cloud providers. here service open classic LB. 
+
+clusterip will not work in internet, works only in kubernetes i.e., only works internally i.e., pod to pod
+
+Node port
+---------
+Node port works from internet
+Node port automatically creates cluster IP and creates new node port
+
+kubectl delete -f 12-service.yaml
+kubectl apply -f 13-node-port.yaml
+
+kubectl get svc --- to get service info -- gives cluster IP and also node port
+
+kubectl get pod -o wide -- to get pod ip and also the node where pod is running
+
+check the private ip address of node from aws ui
+copy  the node public ip address and access with node port from browser(open port in security group)
+
+If we acess the node port with any node ip it will work because kubernetes will send the request to the correct pod
+
+In NodePort type
+when user send request with public ip(any instance/node public IP) ip:nodeport
+then kubernetes will forward the request to cluster ip service
+then cluster ip service will forward the request to the pod
+When we open port in security group Kubernetes will open node port on all instances(nodes) so we the url will work with any instance ip and node port
+
+# test with url
+# http:<AnyInstancePublicIP>:<NodePort>
+
+kubectl delete -f 13-node-port.yaml
+
+kubectl apply -f 14-load-balancer.yaml
+
+In Load Balancer type
+request will come from user to Load balancer listening on port 80 
+then LB will forward to node port to any one of the instances(nodes) in the cluster
+then from any one of the instances(node) request goes to cluster ip
+then finally request will be sent from cluster ip to the pod
+
+# test with url
+# http:<LB_DNS_Name>:<NodePort>
+
+# create Route53 record for LB DNS name with domain name to access the url with domain name
 
 
