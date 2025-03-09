@@ -1842,7 +1842,7 @@ docker run -d -p 80:80 --name frontend --network expense frontend:1.0.0
 docker exec -it frontend bash
 cat /etc/nginx/nginx.conf
 -------------------------------------------------------------------------------------------------------------------------------------------------
-session 46  -- PENDING
+session 46
 -------------------------------------------------------------------------------------------------------------------------------------------------
 Host Network
 ------------
@@ -1854,19 +1854,200 @@ For host network use localhost instead of container name(dns)
 docker build -t mysql:1.0.0 .
 docker run -d --name mysql --network host mysql:1.0.0
 
+netstat -ntlp
+
 docker build -t backend:1.0.0 .
 docker run -d --name backend --network host backend:1.0.0
 
 docker build -t frontend:1.0.0 .
 docker run -d --name frontend --network host frontend:1.0.0
 
+Host network is less secure and ports will exhaust
+
 Overlay network
 ---------------
 It is used for multiple docker hosts
 we will not use this we will use kubernetes
+
+Volumes
+-------
+docker containers are ephemeral. ephemeral means temporary
+once we remove container it removes data also
+
+docker run -d -p 80:80 nginx
+docker inspect 783
+docker will store data in MergedDir
+cd to MergedDir("MergedDir": /var/lib/docker/overlay2/9e776cc1385bc3e88be8e0052ea2a48b16b66c61be5ec0de45c2d5b91e58effe/merged)
+
+Delete the container and try cd to MergedDir the directory cannot be accessed because docker will delete it when container is deleted.
+
+docker rm -f 783
+cd to MergedDir
+
+you can create one directory  for volume in host and map it to container. even if we delete container, data will not be lost, you can remount it..
+
+mkdir nginx-data
+docker run -d -p 80:80 -v /home/rajasekhar/nginx-data:/usr/share/nginx/html nginx
+docker exec -it 7ed bash
+cd /usr/share/nginx/html
+echo "<h1>Hello Volumes</h1>" > index.html
+
+check: http://<IP>:80
+
+Delete the container and try to mount the volume again
+docker rm -f 7ed
+docker run -d -p 80:80 -v /home/ec2-user/nginx-data:/usr/share/nginx/html nginx
+
+check: http://<IP>:80
+
+cd nginx-data
+echo "<h1>Iam using  Volumes</h1>" > volumes.
+
+check: http://172.22.168.203/volumes.html
+
+The directoy we created is called as unnamed volumes
+we created directory, so we have to manage it...
+
+unnamed volumes
+docker volumes --> you have to create volumes with docker commands, so docker can manage, we no need to worry of creation and managing
+
+docker volume create nginx-data-volume
+docker volume ls
+docker inspect nginx-data-volume
+
+docker run -d -p 80:80 -v nginx-data-volume:/usr/share/nginx/html nginx
+
+
+manually running containers
+===========================
+1. we need to know the dependency
+2. we need to make sure network creation and volume creation
+3. while removing we need to remove in anti dependency order..
+4. manually run docker run commands
+
+docker-compose.yaml
+
+docker compose up -d
+docker compose down
+
+mysql
+backend --> trying to connect mysql, before it is completely up, so we need to delay few sec
+
+optimising docker files
+-----------------------
+use alpine image
+remove root access with USER instruction
+
+cd
+echo "tets secret" > secret.txt
+docker run -d  -v /:/app-data nginx
+docker exec -it 634s bash
+cd app-data
+cd home/rajasekhar
+cat secret.txt
+
+From container system files will be accessed to restrict this use USER instruction
+
+docker build -t backend:1.0.0 .
+
+docker build -t frontend:1.0.0 .
+
+docker compose up -d
+docker compose down
+
+docker exec -it  backend sh
+id  # command to check the user
+
+docker exec -it frontend sh
+
 -------------------------------------------------------------------------------------------------------------------------------------------------
-session 47  -- PENDING
+session 47
 -------------------------------------------------------------------------------------------------------------------------------------------------
+docker build -t dath1/mysql:1.0.0 .
+
+docker build -t dath1/backend:1.0.0 .
+
+docker build -t dath1/frontend:1.0.0 .
+
+docker login -u dath1
+docker push dath1/mysql:1.0.0
+docker push dath1/backend:1.0.0
+docker push dath1/frontend:1.0.0
+
+create Dockerfile
+build image
+push to docker hub
+
+Download the images from dockerhub
+Change image in compose file with docker hub image name
+docker-compose.yaml
+	image: joindevops/mysql:1.0.0
+	
+docker compose up -d
+docker compose down
+	
+Image layers
+=============
+Optise image layers
+
+export DOCKER_BUILDKIT=0
+docker build -t dath1/mysql:1.0.0 .
+
+ export DOCKER_BUILDKIT=0
+ docker build -t layer-test:1.0.0 .
+ try this multiple times
+ docker push layer-test:1.0.0 .
+
+Docker maintains the images as layers, each and every instruction is one layer. docker creates
+1. intermediate container from instruction-1
+2. docker runs 2nd instruction on top of IC-1. then docker saves this another layer
+3. docker saves this container as another image layer. create intermediate container out of it IC-2
+4. Now docker runs 3rd instruction in IC-2 container. docker saves this as another layer
+5. docker creates intermediate container from this layer as IC-3
+
+How do you optimise docker layers?
+==================================
+1. less number of layers faster builds, because number of intermediate containers are less
+you can club multiple instructions into single instruction
+2. keep the frequently changing instructions at the bottom of Dockerfile
+
+Multi stage builds
+===================
+Java
+JDK --> Java development kit
+JRE --> Java runtime environment
+
+JDK > JRE
+JRE is subset of JDK
+
+JDK = JRE + Extra libraries
+
+while installing some libraries, OS adds extra space to HD. We will take only that jar file output and copy it another Dockerfile where only jre runs...
+
+We can have 2 dockerfiles one is for builder, we can copy the output from builder into 2nd dockerfile and run it, we can save some image space using this
+
+Docker multistage builds are primarily used to create smaller, more optimized container images by separating the build environment from the runtime environment.
+ We can have one as builder and one as runner, copy the desired output from builder to runner. docker removes builder automatically
+
+1. build the image --> use docker
+2. run the image as container --> use kubernetes
+
+pg have 100 rooms, what if water is stopped...
+
+if owner have say 5pg, 
+
+what is underlying docker server is crashed. We need to maintain multiple docker hosts. 
+You need some orchestrator to manage all the docker hosts... docker swarm is docker native orchestrator
+
+kubernetes is the popular container orchestrator tool..
+
+autoscaling of containers --> 
+HA --> run containers in multiple servers
+reliability --> orchestrator shifts the container to another host if one host is down
+kubernetes n/w and DNS is more stronger than docker swarm
+kubernetes integrates with cloud providers
+storage is better than in dockerswarm
+
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2142,5 +2323,157 @@ then finally request will be sent from cluster ip to the pod
 # http:<LB_DNS_Name>:<NodePort>
 
 # create Route53 record for LB DNS name with domain name to access the url with domain name
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 50
+-------------------------------------------------------------------------------------------------------------------------------------------------
+replicaset - can be used for creating multiple pods
+Pod is subset of replicaset
+pod name = replicaset-name-random 5 digit
+
+To create multiple pods we have to change pod name and run the 02-pod.yaml file
+metadata:
+  name: nginx2
+  
+Instead of creatng multiple pods manually we can use replicaset 
+
+ kubectl apply -f 15-replica-set.yaml
+
+kubectl get replicaset
+
+kubectl get pods -o wide
+
+watch kubectl get pods # in new terminal
+
+if we delete one pod, replicateset will automatically creates new pod
+
+If we run 02-pod.yaml again with same image nothing will change
+If we change image name and run 02-pod.yaml file image will be updated
+
+check the image with below command
+kubectl describe pod nginx -n expense
+
+If image is changed in replicaset with another version ,replicaset will not update the image
+
+To achieve this we need to use deployment
+
+Deployment 
+----------
+Deployment yaml is same as replicaset except that kind is Deployment
+
+kubectl apply -f 16-deployment.yaml
+
+kubectl get deployment
+
+kubectl get rs or kubectl get replicaset
+
+kubectl get pods
+
+To verify the replicaset updates the pods with another image version
+change the image name from nginx:1.14.2 to nginx:latest
+
+kubectl apply -f 16-deployment.yaml
+
+check deployment with image and service
+---------------------------------------
+docker build -t dath1/deployment:1.0 .
+docker push dath1/deployment:1.0
+
+then run the 17-deployment-service.yaml to test the deployment
+
+Test with url http://<LB_DNS_NAME>:80
+
+change the verion in index.html and build the image again to  test the deployment
+
+docker build -t dath1/deployment:2.0 .
+docker push dath1/deployment:2.0
+
+build the image from DEPLOYMENT folder
+
+kubectl apply -f 17-deployment-service.yaml
+kubectl get svc
+kubectl get deployment
+kubectl get rs or kubectl get replicaset
+kubectl get pods
+
+Test with url http://<LB_DNS_NAME>:80
+
+To verify the replicaset updates the pods with another image version
+change the image name from 1.0 to 2.0
+
+kubectl apply -f 16-deployment.yaml
+
+Test with url http://<LB_DNS_NAME>:
+
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+Commands to check deployment status and rollback
+-------------------------------------------------
+kubectl rollout history deployment/nginx  -- to check the deployment history
+kubectl rollout history deployment/nginx --revision=2  -- to check revision 2 history
+
+kubectl rollout undo deployment/nginx --> roll back to immidiate previous version
+kubectl rollout undo deployment/nginx --to-revision=2 ---> roll back to specific verison
+
+kubectl get deployment nginx   -- to check the deployment status
+kubectl rollout status deployment/nginx  -- to check the deployment status
+
+Expense project using k8s
+--------------------------
+To avoid mentioning the namespace name (-n namespacename) in  kubectl commands install the tool kubens
+
+sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+
+kubens <namespace_name>  -- set the name of namespace
+kubens expense
+
+kubectl apply -f 01-namespace.yaml
+
+mysql
+kubectl apply -f manifest.yaml 
+
+kubectl get pods -n expense
+kubectl exec -it mysql-djshdsh -n expense -- bash
+mysql -u root -pExpenseApp@1
+show databases;
+use transactions;
+show tables;
+   
+
+backend
+kubectl apply -f manifest.yaml    
+
+frontend
+change port 80 to 8080 in nginx.conf file in Dockerfile and build the image in 18-expense-docker repo
+remove /etc/nginx/conf.d/default.conf file which has port 80
+
+docker build -t dath1/frontend:1.1.0 .
+docker push dath1/frontend:1.1.0
+
+kubectl apply -f manifest.yaml   
+
+kubectl logs frontend-54c88dc9ff-8xdnk 
+
+kubernetes won't allow system ports for non root user
+0-1024 are system ports -- container has to run with root user to access system ports
+Non root users cannot access this ports
+
+Either change the user to root or change the port in frontend nginx.conf from 80 to 8080
+
+docker build -t dath1/frontend:1.2.0 .
+docker push dath1/frontend:1.2.0
+
+Test the app with url
+http://<LB_DNS_NAME>:80
+
+add route 53 record for LB DNS NAme and test the url with dns name
+
+
+
+
+
+
 
 

@@ -13,7 +13,9 @@ services
 	1. cluster IP --> default, only works internally i.e., pod to pod
 	2. NodePort --> external requests
 	3. LoadBalancer --> only works with cloud providers. here service open classic LB. 
-
+replicaset - can be used for creating multiple pods
+deployment -- to update the image in replicaset
+kubens -- tool to set namespace
 
 eksctl -- AWS command line tool to create and manage EKS cluster 
 For real projects terraform is used to create EKS cluster
@@ -228,6 +230,10 @@ Instead of IP we will create service to access the pod or pod to pod communicati
 
 service will be cretad with clusterip
 kubectl delete pods --all --all-namespaces   -- to delete all pods
+kubectl delete pods --all -A
+
+kubectl get pods --all-namespaces
+kubectl get pods -A
 
 kubectl apply -f 12-service.yaml
 
@@ -295,15 +301,158 @@ then from any one of the instances(node) request goes to cluster ip
 then finally request will be sent from cluster ip to the pod
 
 # test with url
-# http:<LB_DNS_Name>:<NodePort>
+# http:<LB_DNS_Name>:<80>
 
 # create Route53 record for LB DNS name with domain name to access the url with domain name
 
+replicaset - can be used for creating multiple pods
+Pod is subset of replicaset
+pod name = replicaset-name-random 5 digit
+
+To create multiple pods we have to change pod name and run the 02-pod.yaml file
+metadata:
+  name: nginx2
+  
+Instead of creatng multiple pods manually we can use replicaset 
+
+ kubectl apply -f 15-replica-set.yaml
+
+kubectl get replicaset
+
+kubectl get pods -o wide
+
+watch kubectl get pods # in new terminal
+
+if we delete one pod, replicateset will automatically creates new pod
+
+If we run 02-pod.yaml again with same image nothing will change
+If we change image name and run 02-pod.yaml file image will be updated
+
+check the image with below command
+kubectl describe pod nginx -n expense
+
+If image is changed in replicaset with another version ,replicaset will not update the image
+
+To achieve this we need to use deployment
+
+Deployment 
+----------
+Deployment yaml is same as replicaset except that kind is Deployment
+
+kubectl apply -f 16-deployment.yaml
+
+kubectl get deployment
+
+kubectl get rs or kubectl get replicaset
+
+kubectl get pods
+
+To verify the replicaset updates the pods with another image version
+change the image name from nginx:1.14.2 to nginx:latest
+
+kubectl apply -f 16-deployment.yaml
+
+check deployment with image and service
+---------------------------------------
+docker build -t dath1/deployment:1.0 .
+docker push dath1/deployment:1.0
+
+then run the 17-deployment-service.yaml to test the deployment
+
+Test with url http://<LB_DNS_NAME>:80
+
+change the verion in index.html and build the image again to  test the deployment
+
+docker build -t dath1/deployment:2.0 .
+docker push dath1/deployment:2.0
+
+build the image from DEPLOYMENT folder
+
+kubectl apply -f 17-deployment-service.yaml
+kubectl get svc
+kubectl get deployment
+kubectl get rs or kubectl get replicaset
+kubectl get pods
+
+Test with url http://<LB_DNS_NAME>:80
+
+To verify the replicaset updates the pods with another image version
+change the image name from 1.0 to 2.0
+
+kubectl apply -f 16-deployment.yaml
+
+Test with url http://<LB_DNS_NAME>:
+
+https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+Commands to check deployment status and rollback
+-------------------------------------------------
+kubectl rollout history deployment/nginx  -- to check the deployment history
+kubectl rollout history deployment/nginx --revision=2  -- to check revision 2 history
+
+kubectl rollout undo deployment/nginx --> roll back to immidiate previous version
+kubectl rollout undo deployment/nginx --to-revision=2 ---> roll back to specific verison
+
+kubectl get deployment nginx   -- to check the deployment status
+kubectl rollout status deployment/nginx  -- to check the deployment status
+
+Expense project using k8s
+--------------------------
+To avoid mentioning the namespace name (-n namespacename) in  kubectl commands install the tool kubens
+
+sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+
+kubens <namespace_name>  -- set the name of namespace
+kubens expense
+
+kubectl apply -f 01-namespace.yaml
+
+mysql
+kubectl apply -f manifest.yaml 
+
+kubectl get pods -n expense
+kubectl exec -it mysql-djshdsh -n expense -- bash
+mysql -u root -pExpenseApp@1
+show databases;
+use transactions;
+show tables;
+   
+
+backend
+kubectl apply -f manifest.yaml    
+
+frontend
+change port 80 to 8080 in nginx.conf file in Dockerfile and build the image in 18-expense-docker repo
+remove /etc/nginx/conf.d/default.conf file which has port 80
+
+docker build -t dath1/frontend:1.1.0 .
+docker push dath1/frontend:1.1.0
+
+kubectl apply -f manifest.yaml   
+
+kubectl logs frontend-54c88dc9ff-8xdnk 
+
+kubernetes won't allow system ports for non root user
+0-1024 are system ports -- container has to run with root user to access system ports
+Non root users cannot access this ports
+
+Either change the user to root or change the port in frontend nginx.conf from 80 to 8080
+
+docker build -t dath1/frontend:1.2.0 .
+docker push dath1/frontend:1.2.0
+
+Test the app with url
+http://<LB_DNS_NAME>:80
+
+add route 53 record for LB DNS NAme and test the url with dns name
 
 
 
-
-
+------------------------------------------------------------------------------------------
+CrashLoopBackoff - unable to create pod from image i.e., unable to keep the pod running continuously
+ErrorImagePull - unable to pull the image
 
 
 
