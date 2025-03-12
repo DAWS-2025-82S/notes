@@ -2469,9 +2469,295 @@ Test the app with url
 http://<LB_DNS_NAME>:80
 
 add route 53 record for LB DNS NAme and test the url with dns name
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 51
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+Volumes
+============
+everything in k8 is ephemeral. pods, nodes, master node all are ephemeral. So it is not good to store DB inside K8
+
+Storage administration --> manage all the disks related to servers
+Backup every day
+Restore testing
+N/w to storage
+
+EBS -> Elastic block storage  like harddisk
+EFS -> Elastic file system    like google storage
+
+If server is in AZ us-east-1b, EBS also should be here. EBS is less latency. EBS is well suitable for DB and OS
+
+conditions for EBS
+---------------------------
+1. node and EBS volume should be in same AZ
+2. drivers install( to access EBS from EKS)
+3. EC2 worker nodes should have permission to work with EBS volumes
+
+static and dynamic provisioning
+=================================
+static means we have to create disk(volume) manually
+Dynamic means EKS will create the Disk(volume)
+
+EBS static
+==========
+1.we have to create disk(volume) manually in same AZ as in worker nodes 
+2.drivers install(ebs csi driver) using kustomize
+	https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/docs/install.md
+	kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.40"
+	
+	kubectl get pods -n kube-system --  check the drivers installed as pods	
+
+3.select the worker node security tabs
+	click on Iam roles
+	Add permission and Attach "AmazonEBSCSIDriverPolicy" to manage volumes
+
+4.Mount the volume to the pod using PV and PVC
+	
+everything in k8 is resource/object. if you can treat or manage the volumes from k8 objects any k8 engineer can work on this..
+
+PV --> Persistant volume, represents or wrapper of physical volume
+PVC --> Claiming the volume
+Storage class
+
+PV is wrapper object in kubernetes to represent physical volume like EBS or EFS
+
+kid --> mother --> father --> wallet
+Pod	-->  PVC --> PV -->  volume
+
+https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/static-provisioning/manifests/pv.yaml  -- for creating PV
+
+access modes
+============
+ReadWriteOnce, ReadOnlyMany, ReadWriteMany, or ReadWriteOncePod,
+
+ReadWriteOnce - At a time only one node can read and write with multiple pods
+
+ReadWriteOncePod -- for only one pod
+
+Lifecycle policies(i.e., what will happen to data if the pod is deleted)
+=================
+
+Retain -- data and volume will not delete
+delete -- data and volume will be deleted
+recycle -- data will delete but not volume
+
+kubectl apply -f 01-ebs-static-pv.yaml
+kubectl get pv
+
+create PVC  -- to claim the volume
+https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/static-provisioning/manifests/claim.yaml -- ex to create PVC
+
+kubectl apply -f 02-ebs-static-pvc.yaml
+kubectl get pvc
+
+Pod should claim that PVC
+
+all the files/data of pod stored in /usr/share/nginx/html will be stored in volume
+
+kubectl get pods
+
+kubectl get nodes --show-labels  ----> to get nodeSelector label
+
+if pod schedules(created) in 1a and volume is in 1b, pod status will be in pending for continuously.
+
+scheduler(nodeSelector) --> schedules your pods on to appropriate nodes
+
+kubectl apply -f 02-ebs-static-pvc.yaml
+
+kubectl exec -it ebs-static -- bash
+cd /usr/share/nginx/html
+echo "<h1>Hello from EBS static</h1>" > index.html
+
+check : http://<LB_DNS_NAAME>:80
+
+Delete all resources(PV,PVC,pod,service)
+kubectl delete -f 02-ebs-static-pvc.yaml
+kubectl delete -f 01-ebs-static-pv.yaml
+
+all resources got deleted but not volume and data
+try recreate the pod and verify the data in volume is not deleted
+
+kubectl apply -f 01-ebs-static-pv.yaml
+kubectl apply -f 02-ebs-static-pvc.yaml
+
+check : http://<LB_DNS_NAAME>:80
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 52
+-------------------------------------------------------------------------------------------------------------------------------------------------
+permanent storage
+=================
+1. SAN - Storage Area Network
+2. K8 Admin
+3. Expense DevOps Engineer --> they get access to only expense namespace
+
+Expense DevOps engineer send a mail to SAN with the manager approval. SAN will take their manager approval and create storage for us.
+
+We will forward disk details to k8 admin and ask them to create PV.
+
+In kubernetes there are 2 type of resources
+
+kubectl api-resources
+
+1. namespace level
+2. cluster level -- we will not have access to create clusterlevel resources so we will send request to create PV which is cluster level resource
+
+they create PV and send the name for us..
+
+then we will create PVC, pod to access the storage
+
+Kid --> Mom --> Dad --> Wallet
+Pod --> PVC --> PV  --> Storage
+
+EBS Static
+============
+1. install drivers
+2. give permissions to worker nodes
+3. create volume
+4. create PV, PVC and cliam through pod
+5. EC2 and EBS should be in same az incase of EBS provisioning
+
+kubectl apply -k "github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.40"  -- driver install
+
+watch kubectl get pods # to monitor pods
+
+EBS dynamic
+============
+
+Kid --> Mom --> UPI
+Pod --> PVC --> SC
+
+StorageClass --> this object is responsible for dynamic provisioning. it will create external storage(volume) and PV automatically
+
+kubectl get sc
+
+1. install drivers
+2. give permissions to worker nodes
+3. create storage class
+
+https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/master/examples/kubernetes/dynamic-provisioning/manifests/storageclass.yaml -- sc example
+
+kubectl apply -f 03-ebs-sc.yaml
+kubectl get sc
+
+ StorageClass should be empty for static provisionin(EBS Static)
+ Provide StorageClass name for dynamic provisioning(EBD Dynamic)
+kubectl apply -f 04-ebs-dynamic.yaml
+
+kubectl get pvc
+kubectl get pv
+kubectl get pods
+kubectl get svc
+
+check : http://<LB_DNS_NAME>:80   --- no output
+
+kubectl exec -it ebs-dynamic -- bash
+cd /usr/share/nginx/html
+echo "<h1>Hello from Dynamic EBS Volume</h1>" > index.html
+
+check : http://<LB_DNS_NAAME>:80
+
+kubectl apply -f 04-ebs-dynamic.yaml
+
+Volume will not delete we have to delete it manually
+
+EFS --> Elastic file system
+-----------------------------
+1. EBS should be in same AZ as in EC2, EFS can be anywhere in n/w
+2. EBS is speed compare to EFS
+3. EBS is used OS disk and databases, EFS can be used for file storages
+4. EBS size is fixed. EFS will be scaled automatically
+5. EFS is based on NFS(Network File Sharing) protocol. 2049 port
+6. EBS and EFS should be mounted to any instance to use.
+7. You can have any filesystem attached to EBS, but EFS use NFS, we can't change.
+
+EFS static
+=============
+1. install drivers(Link - https://github.com/kubernetes-sigs/aws-efs-csi-driver)
+kubectl apply -k \
+    "github.com/kubernetes-sigs/aws-efs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-2.1"
+	
+   	kubectl get pods -n kube-system --  check the efs csi drivers installed as pods	
+	
+2. give permissions
+    select the worker node security tabs
+	click on Iam roles
+	Add permission and Attach "AmazonEFSCSIDriverPolicy" to manage volumes
+3. create EFS
+4. open port no 2049 on EFS to allow traffic from EC2 worker nodesi.e., add worker node security group to EFS security inbound rules with NFS protocol
+5. create PV, PVC and POD
+
+https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/static_provisioning/specs/pv.yaml -- ex for pv
+
+ex for PV
+https://github.com/kubernetes-sigs/aws-efs-csi-driver/blob/master/examples/kubernetes/static_provisioning/specs/pv.yaml
+
+kubectl apply -f 05-efs-pv.yaml
+ 
+kubctl get pv
 
 
+ kubectl apply -f 06-efs-pvc.yaml
+ kubectl get pvc   
+ kubectl get pods
 
+kubectl exec -it efs-static -- bash
+cd /usr/share/nginx/html
+echo "<h1>Hello from Static EFS Volume</h1>" > index.html
+
+check : http://<LB_DNS_NAAME>:80
+
+ kubectl delete -f 06-efs-pvc.yaml
+ kubectl delete -f 05-efs-pv.yaml
+
+Try creating again the data in EFS wiil be shown
+kubectl apply -f 05-efs-pv.yaml
+ kubectl apply -f 06-efs-pvc.yaml
+
+check : http://<LB_DNS_NAAME>:80
+
+
+EFS Dynamic
+=============
+1. create storage class
+2. install drivers
+3. give permissions
+
+# For Dynamic EFs also we need to create EFS and provide the ID in fileSystemId
+
+kubectl apply -f 07-efs-sc.yaml
+kubectl get sc
+
+# kubectl apply -f 08-efs-dynamic.yaml
+# kubectl get pv
+# kubectl get pvc
+
+For Dynamic EFS  access points will be created
+
+kubectl get pods
+
+kubectl exec -it efs-dynamic -- bash
+cd /usr/share/nginx/html
+echo "<h1>Hello from Dynamic EFS Volume</h1>" > index.html
+
+check : http://<LB_DNS_NAAME>:80
+
+ kubectl delete -f 08-efs-dynamic.yaml
+ kubectl delete -f 07-efs-sc.yaml
+
+Try creating again the data in EFS wiil be shown
+kubectl apply -f 07-efs-sc.yaml
+ kubectl apply -f 08-efs-dynamic.yaml
+check : http://<LB_DNS_NAAME>:80
+
+data is not coming which is working static EFS -- need to cross check
+
+StatefulSet vs Deployment
+==============
+1. Deployment is for stateless applications, generally frontend and backend
+2. StatefulSet is for stateful applications usually databases.
+3. StatefulSet will have headless service, deployment will not have headless service
+4. PV, PVC are mandatory for statefulset
+5. pods in statefulset create in orderly manner with static names. statefulset-0, statefulset-1
 
 
 

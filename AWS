@@ -58,6 +58,9 @@ spot --> 70-90% discount hardware available now...when our customers require we 
 
 AWS cloudformation -- Just like terraform infra as code - AWS native service - will create resouces for cluster
 
+EBS(Elastic Block storage)  -- in kubernetes volumes
+EFS(Elastic File system) -- in kubernetes volumes
+AmazonEBSCSIDriverPolicy -- I am role for EBS ploicy
 
 VPC and subnets Creation
 ---------------------------------------------------------------------------------
