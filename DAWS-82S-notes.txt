@@ -2403,7 +2403,7 @@ change the image name from 1.0 to 2.0
 
 kubectl apply -f 16-deployment.yaml
 
-Test with url http://<LB_DNS_NAME>:
+Test with url http://<LB_DNS_NAME>:80
 
 https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
 
@@ -2640,7 +2640,7 @@ kubectl apply -f 03-ebs-sc.yaml
 kubectl get sc
 
  StorageClass should be empty for static provisionin(EBS Static)
- Provide StorageClass name for dynamic provisioning(EBD Dynamic)
+ Provide StorageClass name for dynamic provisioning(EBS Dynamic)
 kubectl apply -f 04-ebs-dynamic.yaml
 
 kubectl get pvc
@@ -2758,7 +2758,228 @@ StatefulSet vs Deployment
 3. StatefulSet will have headless service, deployment will not have headless service
 4. PV, PVC are mandatory for statefulset
 5. pods in statefulset create in orderly manner with static names. statefulset-0, statefulset-1
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 53
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Deployment
+==========
+kubectl apply -f 17-deployment-service.yaml
 
+kubectl get svc
+kubectl get deployment
+kubectl get rs or kubectl get replicaset
+kubectl get pods
+kubectl get pods -o wide 
+
+kubectl exec -it podname -- bash
+
+when you hit nslookup on service name, you will get ClusterIP as address
+
+apt update -y
+apt install dnsutils -y
+nslookup nginx
+
+
+Statefulset
+===========
+You need to attach headless service to statefulset. Why?
+
+what is headless service? headless service will have no ClusterIP. It will be attached to statefulset
+
+PV and PVC are mandatory for statefulset
+
+Create Dynamic EBS
+----------------
+1. install drivers
+2. give permissions to worker nodes
+3. create storage class
+
+kubectl apply -f volumes/03-ebs-sc.yaml
+
+kubectl apply -f 18-statefulset.yaml
+
+kubectl get svc
+
+	For statefulset, service will be created with ClusterIP as None
+
+kubectl get pods
+
+kubectl get pv,pvc
+
+pods in statefulset will be created in orderly manner i.e., one by one not all at a time like in Deployment
+deployment pods names are choosen as random. but statefulset pods names are unique. <statefulset-name>-0, <statefulset-name>-1
+
+For deployment pods will be created with the format below
+
+<Deployment_Name>-<RS_RandomNumber>-<Pod_RandomNumber>
+
+For statefulset pods will be created with the format below
+
+<statefulset-name>-0, <statefulset-name>-1
+
+why statefulset have same names, pods preserve their identity?
+
+stateful set creates pods with same old names after deletion
+
+nginx-0 delete pod, 
+statefulset creates immediately another pod nginx-0  with same name and it should attach to its own storage through naming convention. persistentvolumeclaim/www-nginx-0
+i.e., persistentvolumeclaim/<volumeName>-<PodName>
+
+kubectl delete pod nginx-o
+
+after deletion new pod will be created and will be attached to the same volume
+
+kubectl exec -it nginx-0 -- bash
+
+apt install dnsutils -y
+nslookup nginx-headless
+
+kubectl get pods -o wide 
+
+nslookup will give pod ip address not ClusterIP address which is shown for deployment
+Giving pod ip address on nslookup is exactly required for databases
+When create request comes to one worker node,to sync that data to other worker nodes in the cluster it should know the other nodes available in the cluster.
+To get other nodes info it will nslookup on headless service
+
+So headless service is required in statefulset so that  it can update to other nodes using pod ipadresses.
+
+
+Deployment vs Statefulset
+============================
+1. Deployment is for stateless applications like frontend, backend, etc. Statefulset is for DB related applications like MySQL, ELK, Prometheus, Queue apps, etc.
+2. Statefulset requires headless service and normal service to be attached. Deployment will not have stateless service
+3. PV and PVC are mandatory to statefulset, they create individual storages for each pod. PV and PVC for deployment creates single storage
+4. Statefulset pods will be created in orderly manner. Deployment pods will be created parellely
+5. Deployment pods names are choosen random. Statefulset pods keep the same identity. like <statefulset-name>-0, -1, etc.
+
+For statefulset pods names will be unique not random because each pod in statefulset have seperate storage i.e., PV and PVC and
+if a pod is deleted it will be recreated with same old name not random name so that new pod can attach to the same storage/volume again
+
+kubectl delete -f 18-statefulset.yaml
+
+Statefulset requires normal service also for load balancing and  headless service  for clustering
+
+Headless service and Normal service are same except headless service has clusterIP: None
+
+kubectl delete -f volumes/03-ebs-sc.yaml
+
+kubectl delete -f 18-statefulset.yaml
+
+kubectl delete pv,pvc --all -A
+
+# If we delete the PV and PVC  with below command
+#   kubectl delete pv,pvc --all -A
+
+# New Volumes will be created again
+
+kubectl apply -f volumes/03-ebs-sc.yaml
+kubectl apply -f 18-statefulset.yaml
+
+# If we delete only storage class and statefulset new volumes are not created
+
+cd 21-k8-expense-volumes  --- expense project using volumes
+=========================
+kubectl apply -f 01-namespace.yaml
+
+Create Dynamic EBS
+----------------
+1. install drivers
+2. give permissions to worker nodes
+3. create storage class
+
+mysql
+------
+  kubectl apply -f manifest.yaml 
+
+use kubens  to set namespace
+
+k9s installation
+----------------
+https://github.com/derailed/k9s
+
+curl -sS https://webinstall.dev/k9s | bash  --- command to install k9s
+
+Open new tab and Type k9s 
+
+Type shift+:(pod or service or namespace)
+
+Type shift+:+pod and then 
+type s to get pod shell access
+type l to get pod logs
+
+
+mysql -u root -pExpenseApp@1
+show databases;
+use transactions;
+show tables;
+
+backend
+--------
+  kubectl apply -f manifest.yaml 
+
+frontend
+--------
+  kubectl apply -f manifest.yaml  
+
+Mount nginx.conf file as volume using ConfigMap  
+
+Autoscaling
+=============
+Vertical, Horizontal
+
+Vertical scaling --> Increasing resources in of same server---> 2CPU, 4GB, 20GB HD --> 4CPU 8GB 100GB HD
+Horizontal scaling --> create another server with 2CPU, 4GB, 20GB HD and add to LB
+
+There is down time in Vertical scaling and no downtime in horizontal scaling
+
+4 individual houses, 
+
+HPA in K8
+------------
+HPA - Horizontal Pod Autoscaler
+We should metrics server installed in k8
+
+kubectl top pod
+
+kubectl top pod -n expense
+
+kubectl top hpa -n expense
+
+while true;do curl <ALB_URN>;done  --- this will not send parallel requests
+
+Apache Bench
+------------
+Tool  to send parallel requests
+
+sudo yum install httpd-tools -yaml
+ab --help
+ab -n 50000 -c 100 <ALB_URL>  --- / at the end is required
+
+
+kubectl apply -f 01-namespace.yaml
+kubectl apply -f 03-ebs-sc.yaml
+kubectl apply -f 01-mysql/manifest.yaml
+kubectl apply -f 02-backend/manifest.yaml
+kubectl apply -f 03-frontend/manifest.yaml 
+
+kubectl delete -f 01-mysql/manifest.yaml
+kubectl delete -f 02-backend/manifest.yaml
+kubectl delete -f 03-frontend/manifest.yaml 
+kubectl delete -f 03-ebs-sc.yaml
+
+kubectl delete pv,pvc --all -A
+If we delete the PV and PVC  with below command
+  kubectl delete pv,pvc --all -A
+
+New Volumes will be created again
+
+If we delete only storage class new volumes are not created
+and pods will connect to existing volumes
+
+Test the app 
+http://<LB_URN>:80/
+
+ab -n 50000 -c 100 http://afdb66a07d5594006b4825856aa3011c-210927200.us-east-1.elb.amazonaws.com/
 
 
 
