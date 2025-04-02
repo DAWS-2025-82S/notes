@@ -36,7 +36,25 @@ statefulset
 statefulset vs deployment
 k9s installation -- https://github.com/derailed/k9s
 21-k8-expense-volumes  -- project
-
+selector
+  taints
+  tolerations
+Affinity
+ node affinity
+ node anti affinity
+ pod affinity
+ pod anti affinity
+Ingress
+  LB
+  TargetGroup
+  
+RBAC
+  Role
+  RoleBinding
+  ClusterRole
+  ClusterRoleBinding
+  
+Just me and Opensource -- youtube channel for kubernetes
 
 eksctl -- AWS command line tool to create and manage EKS cluster 
 For real projects terraform is used to create EKS cluster
@@ -990,6 +1008,537 @@ Test the app
 http://<LB_URN>:80/
 
 ab -n 50000 -c 100 http://afdb66a07d5594006b4825856aa3011c-210927200.us-east-1.elb.amazonaws.com/
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 54 -- HELM PENDING
+-------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 55
+-------------------------------------------------------------------------------------------------------------------------------------------------
+Selectors
+==============
+Scheduler --> it will decide where to run your pod
+
+You can use any of the following methods to choose where Kubernetes schedules specific Pods:
+
+nodeSelector field matching against node labels
+Affinity and anti-affinity
+nodeName field
+Pod topology spread constraints
+
+nodeSelector:
+	az: 1a
+	
+taints and tolerations
+affinity and anti-affinity
+
+kubectl apply -f 01-node-selector.yaml
+
+If workes nodes are in 1a and 1b zone but the nodeselector is given as 1c then
+Pod will not create and it will be in Pending status
+
+kubectl delete -f 01-node-selector.yaml
+
+Errors in K8
+==============
+ErrImagePull --> if node is not able to pull the image
+CrashLoopBackOff --> Container is unable to start
+Pending --> worker node not availalbe in that AZ, PVC is not bound to PV
+ContainerCreating --> PV, PVC
+
+taint --> paint or pollute
+
+if we taint the node, scheduler will not schedule any pods on to that node
+
+kubectl get nodes
+kubectl get nodes --show-labels
+kubectl taint nodes ip-192-168-43-212.ec2.internal hardware=gpu:NoSchedule
+
+kubectl apply -f 01-taint-node-selector.yaml
+
+17.182 --> 1b
+43.212 --> 1a and tainted
+51.139 --> 1a
+
+NoSchedule --> order  -- will not schedule any pods in future and cureent pods will be running
+PreferNoSchedule --> request
+NoExecute --> taint the node which has already few pods running -- deletes the existing pods
+
+kubectl get pods -o wide
+kubectl taint nodes ip-192-168-43-239.ec2.internal hardware=gpu:NoExecute
+kubectl get pods -o wide
+
+Worker nodes are tainted when dedicated worker nodes are required 
+
+toleration --> allow -- the pods to run on tainted nodes
+
+kubectl apply -f 02-toleration.yaml
+
+command to get the nodes with taints
+
+kubectl get nodes -o json | jq '.items[].spec'
+kubectl get nodes -o json | jq -r '.items[] | select(.spec.taints) | .metadata.name'
+
+a dedicated worker nodes are there project savings bank project, it means any other project related pods will not be scheduled here
+
+tolerations will not 100% guarantee that pods will run on the tainted nodes.. 
+because of resources and other pods in the node
+
+try schedule the pods to tainted nodes without toleration configuration then
+the pod will not work and it will be in Pending status
+
+kubectl apply -f 03-tolerations.yaml
+
+Untaint nodes
+--------------
+kubectl taint nodes ip-192-168-43-212.ec2.internal hardware=gpu:NoSchedule-
+kubectl taint nodes ip-192-168-43-239.ec2.internal hardware=gpu:NoExecute-
+
+taint the nodes again and remove nodeSelector configuration
+
+kubectl taint nodes ip-192-168-43-212.ec2.internal hardware=gpu:NoExecute
+kubectl taint nodes ip-192-168-43-239.ec2.internal hardware=gpu:NoExecute
+
+kubectl apply -f 04-tolerations.yaml
+
+Pod will be scheduled to other untainted node since there is no nodeSelector configuration
+
+Affinity
+--------
+tolerations will not 100% guarantee that pods will run on the tainted nodes.. 
+because of resources and other pods in the node 
+
+pod may run in other node
+
+to force the pod to run on specific node we ill use affinity
+
+nodeSelector vs affinity
+-------------------------
+nodeSelector is one option but affinity has more options than nodeSelector
+
+nodeSelector has only key value pair but affinity has multiple options
+You can use the operator field to specify a logical operator for Kubernetes to use 
+when interpreting the rules. You can use In, NotIn, Exists, DoesNotExist, Gt and Lt.
+
+Node affinity is conceptually similar to nodeSelector, 
+allowing you to constrain which nodes your Pod can be scheduled on based on node labels.
+
+kubectl apply -f 05-node-affinity.yaml
+
+kubectl get pods
+
+Pod will be in Pending status Add the labels to the nodes
+
+Node Labels
+-----------
+kubectl get nodes
+kubectl label nodes <Node_Name> hardware=gpu
+
+kubectl label nodes ip-192-168-32-164.ec2.internal hardware=gpu
+kubectl label nodes ip-192-168-33-103.ec2.internal hardware=gpu
+
+After adding label the pod will be in running status
+
+kubectl get node
+
+situation
+==========
+node is tainted --> can scheduler run the pod on that node? --> no
+node is tainted --> pod asks for toleration --> can scheduler run the pod --> may be(if resources are not free or scheduler decided another node) --> Running
+node is tainted --> pod asks for toleration and nodeSelector --> If tainted have resources(Running) --> if tainted nodes don't have any resources(Pending)
+
+requiredDuringSchedulingIgnoredDuringExecution --> Schedule the pod and execute --> hard rules, labels must be availalbe while scheduling
+
+If pod labels are changed between scheduling and execution scheduler will ignore the changes at the time of execution
+
+preferredDuringSchedulingIgnoredDuringExecution --> Soft rule --> if labels are not availalbe then consider schedule on the node..
+
+AntiAffinity
+------------
+opposite to affinity uses NotIn operatori.e., schedules the pod in the node which doesn't match criteria
+
+kubectl apply -f 06-anti-affinity.yaml
+
+podAffinity
+-----------
+In pod affinity both the pods will run in the same node
+Pod affinity will be used for Cache
+
+kubectl apply -f 07-pod-affinity.yaml
+kubectl get pods -o wide
+
+podAntiAffinity
+---------------
+In pod antiaffinity both the pods will not run in the same node
+
+kubectl apply -f 08-pod-affinity.yaml
+kubectl get pods -o wide
+
+backend --> DB 
+backend --> Cache --> DB --> Cache -> 10 days rice store
+
+backend --> node-1
+Cache --> node-2
+
+traffic should come out from node-1 and enter into node-2 and then Cache pod
+
+pod-1 --> 17.182
+pod-2 --> 
+
+Ingress Controller
+===================
+Classic --> Old generation
+ALB --> New generation --> host based routing
+
+LoadBalancer service in kubernetes will create classic Load Balancer which will not support advanced rules
+so we will use ingress contoller which provides new features similar to ALB
+
+netbanking.hdfcbank.com --> netbanking target groups
+sms.hdfcbank.com --> sms banking target group
+
+url path hdfcbank.com/netbanking --> netbanking
+
+by using ingress controller, we can expose application running in K8 to outside world.
+
+setup ingress controller
+use ingress resources --> routing rules
+
+Ingress controller is called as AWS Load Balancer Controller
+
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/deploy/installation/
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 56
+--------------------------------------------------------------------------------------------------------------------------------
+R53 --> ALB --> Listener --> Rule --> Target Group(VM)/Target Group(Pod)
+
+Ingress controller is called as AWS Load Balancer Controller in AWS
+
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/deploy/installation/
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/annotations/
+
+Steps to create ingress controller in AWS
+--------------------------------------------
+eksctl utils associate-iam-oidc-provider \
+    --region <region-code> \
+    --cluster <your-cluster-name> \
+    --approve
+
+Install Dirvers and Set IAM policy 
+Refer ReadMe.MD file	in 25-k8-ingress repo
+
+To check Load balancer drivers which will create,manage and automate Load Balancers
+
+kubectl get pods -n kube-system
+	
+daws82s.online
+
+app1.daws82s.online --> app1 related pods
+app2.daws82s.online --> app2 related pods
+
+Ingress resource
+=================
+Ingress Controller is used to provide external access to the applications running in kubernetes.
+ We can set the routing rules through ingress resource either path based or host based. 
+ in EKS ingress resource can create ALB, Listener, Rule and target group. 
+ Ingress is attached to service, so it fetch the pods and add them to target group
+
+app1(25-k8-ingress/app1)
+------------------------
+Build image for app1 and push to docker hub
+
+docker build -t dath1/app1:1.0.0 .
+dokcer login -u dath1
+docker push dath1/app1:1.0.0
+
+set the annotaions in ingress to create LB
+create certificate for the domain  *.raj82s.online and copy the certificate arn for https
+
+kubectl apply -f manifest.yaml
+kubectl get ingress
+
+ADD dns record for the *.raj82s.online with LB DNS name
+
+app2(25-k8-ingress/app2)
+--------------------------
+Build image for app2 and push to docker hub
+
+docker build -t dath1/app2:1.0.0 .
+dokcer login -u dath1
+docker push dath1/app2:1.0.0
+
+Ingres will check if there is LoadBalancer in joindevops group and 
+it will not create LoadBalancer again
+it will just add the rules
+
+kubectl apply -f manifest.yaml
+kubectl get ingress
+ 
+
+RBAC --> Role based access control
+======
+Authentication and Authorization
+
+Nouns and Verbs
+
+Nouns --> what are the resources we have
+Verbs --> What actions you can take on those resources
+
+Role and RoleBinding used to provide access to namespace level resources
+ClusterRole and ClusterRoleBinding used to provide access to cluster level resources
+
+IAM
+Nouns --> EC2, VPC, R53, CDN, EKS, IoT, etc.
+
+Fresher --> deleteEC2 --> no
+CRUD
+Fresher --> readEC2
+Junior --> createEC2
+Senior --> creaEC2, readEC2, updateEC2
+Team lead --> deleteEC2
+
+User, Role, Rolebinding
+
+expense-trainee --> read access to expense namespace
+role should be bound to user --> through rolebinding
+EKS is one platform, AWS is another platform
+k8 has its own RBAC, AWS has its own
+
+AWS integrates IAM service as authentication mechanism to EKS
+
+a user should describe EKS to connect it..
+
+Create EKS describe policy for user  suresh and also create user
+
+1. create IAM user and provide describeEKSCluster access
+2. we need to create role and rolebinding resources
+3. aws-auth configmap need to be configured to connect EKS and IAM
+
+
+Create IAM User suresh
+-----------------------
+create IAM policy with "ExpenseEKSDescribe" name in AWS
+Add the EKS services and provide the "DescribeCluster" permissions/actions user can perform
+	Provide Region
+	Provide cluster name
+	ARN "arn:aws:eks:us-east-1:311141550186:cluster/expense" added automatically
+create suresh user
+Attach IAM policy to the user
+create access key for suresh account
+create new EC2 instance for user suresh and follow the steps below
+	aws configure
+	aws eks update-kubeconfig --region us-east-1 --name expense  -- update aws eks config to get cluster access
+	aws sts get-caller-identity
+	Install kubectl -- to interact with cluster
+
+26-k8-rbac  -- project setup
+
+kubectl apply -f 01-role.yaml
+
+kubectl get role
+kubectl get rolebinding
+
+Edit aws-auth configmap( Grant IAM Users access to kubernetes with configMap)
+-----------------------
+kubectl get configmap aws-auth -n kube-system -o yaml
+
+copy the output to aws-auth.yaml file and add AWS suresh user and ARN configurtaion to map EKS user with AWS user
+
+https://docs.aws.amazon.com/eks/latest/userguide/auth-configmap.html  -- edit aws auth configmap
+
+kubectl get configmap aws-auth -n kube-system -o yaml
+
+mail suresh about his config is done, he can login
+
+Create new Ec2 instance and follow the below steps
+
+aws configure
+aws configure --profile suresh
+aws sts get-caller-identity
+aws sts get-caller-identity --profile suresh  ---to check the user
+
+https://docs.aws.amazon.com/eks/latest/userguide/create-kubeconfig.html -- aws eks update kubeconfig to get cluster access
+
+to get cluster access update aws eks config use the below command
+-----------------------------------------------------------------
+aws eks update-kubeconfig --region us-east-1 --name expense
+
+cat .kube/config 
+
+check the access
+
+kubectl get pods
+kubectl get pods -n kube-system
+kubectl get nodes 
+kubectl get services
+
+Changes the resources access to * to access all resources
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 57
+--------------------------------------------------------------------------------------------------------------------------------
+Role and RoleBinding used to provide access to namespace level resources
+ClusterRole and ClusterRoleBinding used to provide access to cluster level resources
+
+Follow the same steps used for role and added cluster role config to access cluster level resources
+ uid in 02-aws-auth.yaml is optional
+kubectl api-resources
+
+give cluster level access for nodes
+kubectl apply -f 03-clusterrole.yaml
+
+ServiceAccount
+================
+Service Account:  default
+when you create namespace or every namespace will have default sa
+sa is a non human account, it is pod identity with which it can connect with api server and get access to external services
+
+kubectl apply -f 01-namespace.yaml
+kubectl apply -f 02-pod.yaml
+kubectl get pods -n expense 
+kubectl describe pods nginx -n expense -- check there is default service account
+
+Pod will create LB,rules and targetgroups in Ingress using service accounts.
+
+pod should access aws secret manager
+-------------------------------------
+Kuberentes secrets are encoded but not encrypted
+AWS secrets are encrypted
+
+1. make sure oidc provider exist
+eksctl utils associate-iam-oidc-provider \
+    --region us-east-1 \
+    --cluster expense \
+    --approve
+
+2. create secret and policy in AWS
+2a)create secret "expense/mysql/creds" in AWS with key value pair
+   key		value
+   ----------------
+   username	admin
+   password	admin123
+   
+2b)Create IAM policy "ExpenseMySQLSecretRead" with "SecretManager" service with read "GetSecretValue" Permission and 
+give access to specific resource i.e., secret created
+
+	Edit ARN and provide below
+		Resource region
+		copy and paste ARN of secret created in ARN field
+		secret field will be automatically filled
+3. we need to map sa with IAM policy(Update with kubernetes namespace and policy arn created in aws in below command)
+	For internal resources create role and roldebinding for service account
+	For external resources access attach IAM policy to service account
+	
+eksctl create iamserviceaccount \
+--cluster=expense \
+--namespace=expense \
+--name=expense-mysql-secret \
+--attach-policy-arn=arn:aws:iam::311141550186:policy/ExpenseMySQLSecretRead \
+--override-existing-serviceaccounts \
+--region us-east-1 \
+--approve
+
+this command will create IAM role with policy ExpenseMySQLSecretRead and integrate with EKS SA
+
+kubectl get sa -n expense
+kubectl describe sa expense-mysql-secret -n expense
+kubectl get sa expense-mysql-secret -n expense -o yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::315069654700:role/eksctl-expense-addon-iamserviceaccount-expens-Role1-XUPebrTfkrjM
+  creationTimestamp: "2025-03-17T02:22:46Z"
+  labels:
+    app.kubernetes.io/managed-by: eksctl
+  name: expense-mysql-secret
+  namespace: expense
+  resourceVersion: "7864"
+  uid: 8c97086a-9360-4a82-b77f-142fe47ce1c2
+  
+Verify Role "eksctl-expense-addon-iamserviceaccount-expens-Role1-XUPebrTfkrjM" will be created in AWS and 
+attached to Service Account  
+
+InitContainers
+==================
+InitContainers are used for setup the requirements for pod, for example backend pod can check whether database connections working fine or not
+InitContainers containers can fetch the secrets for pod before it starts
+
+InitContainers are special containers run before main container runs, we can use them to make sure dependent services are running fine before our main application starts and fetch the secrets from secretmanager for main container. they always run to completion. you can run one or many init containers, they executed in sequence
+
+InitContainers can do heavy lifting for main container so that main container is less in size and limit attack surface of main container by not installing more tools in it..
+
+kubectl apply -f 20-init-container.yaml
+
+aws secretsmanager get-secret-value \
+    --secret-id expense/mysql/creds --query SecretString --output text
+	
+Create Pod to get secretes with init contianer	
+
+volumes --> external volumes --->EBS,EFS and configMap as volume
+
+internal volumes --> emptyDir and hostPath
+
+emptyDir --> pod temporary storage, accessible until pod lives. all containers in the pod can access
+init container stores the secret in emptyDir and completes. then main container can acess this
+
+kubectl apply -f 19-sa.yaml
+kubectl get pods -n expense
+kubectl exec -it sa-demo -n expense -- bash
+cat /secrets/.env
+
+To check the pods access running in default namespace from the pod in expense namespace after connecting to sa-demo pod created using 19-sa.yaml
+-------------------------------------------------------------------------------------------------
+kubectl exec -it sa-demo-2 -n expense -- bash
+Install kubectl
+kubectl get pods
+kubectl get pods -n default
+
+kubectl get secrets
+kubectl get secrets -n default
+
+you will get permission error to access this again we need to use sa with role and rolebinding
+exit the pod
+
+Not only to users, role and rolebinding can be created for ServiceAccount also
+
+kubectl get sa expense-mysql-secret -n expense -o yaml
+
+Add role and role binding with Kind as ServiceAccount in 21-sa.yaml
+kubectl apply -f 21-sa.yaml
+kubectl exec -it sa-demo-2 -n expense -- bash
+Install kubectl
+kubectl get pods
+kubectl get pods -n default
+
+kubectl get secrets
+kubectl get secrets -n default
+
+
+what is serviceaccount?
+
+serviceaccount is non human user account, sa is the pod identity with which it can access internal resources or external services. 
+we can map sa with cloud provider IAM roles and policies. we can use sa to fetch secrets from secretmanager
+
+what are initcontainers?
+
+these are special containers run before main container run. 
+we can run one or many init containers, all containers run in sequence. 
+init containers will come to completion, we use them to check the dependencies are running fine before main container starts 
+another example can be fetching the secrets and provide to main container.  
+they do heavy lifting keeping the main container lightweight and 
+less attack surface by not installing utility tools in main container.
+
+what is emptyDir?
+it is pod temporary storage exist until the pod lives, all containers inside pod can acess emptyDir volumes.
+
+OIDC provider
+sa --> IAM Role --> IAM Policy (external roles)
+sa --> Role and RoleBinding (Internal resources access)
 
 ------------------------------------------------------------------------------------------
 CrashLoopBackoff - unable to create pod from image i.e., unable to keep the pod running continuously
@@ -999,6 +1548,10 @@ Pending -- pod in pending status if pod and volume are in different zones AZ.
 Dynamic EBS and EFS both are not working
    EBS creating new volume everytime
    EFS deleting access  points and creating new 
+
+on what basis mapping between EKS and AWS user done?Is it username?   
+
+
 
 
 

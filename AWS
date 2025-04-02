@@ -62,6 +62,12 @@ EBS(Elastic Block storage)  -- in kubernetes volumes
 EFS(Elastic File system) -- in kubernetes volumes
 AmazonEBSCSIDriverPolicy -- I am role for EBS ploicy
 
+Ingress controller is called as AWS Load Balancer Controller in AWS
+create IAM policy in AWS for RBAC in kubernetes
+Create Users
+
+secrets
+
 VPC and subnets Creation
 ---------------------------------------------------------------------------------
 create VPC with CIDR 10.0.0.0/16
