@@ -1,0 +1,85 @@
+https://thenewstack.io/deployment-strategies/
+https://spacelift.io/blog/kubernetes-deployment-strategies
+
+
+Blue Green Deployment steps:
+----------------------------
+Create infra using 27-terraform-aws-eks repo
+27-terraform-aws-eks
+---------------------
+00-vpc
+10-sg
+20-bastion
+40-eks
+30-rds
+Create 3 images with 29-expense-docker repo same as 18-expense-docker --> 02-backend
+setup Database from Bastion
+git clone https://github.com/DAWS-2025-82S/28-k8-blue-green.git
+cd 28-k8-blue-green
+cd backend
+
+
+ kubectl create namespace expense
+ kubectl apply -f config-map.yaml
+
+ For version 1.0.0 change image in blue-deployment.yaml to backendbluegreen:1.0.0
+ kubectl apply -f blue-deployment.yaml
+
+ kubectl apply -f main-service.yaml
+
+Test from debug pod
+curl http://backend:8080/health
+
+output shows blue 1.0.0
+
+For green deployment 2.0.0 change image in green-deployment.yaml to backendbluegreen:2.0.0
+kubectl apply -f green-deployment.yaml
+
+Next to test green before changing the network to green create preview service with version: green
+
+kubectl apply -f preview-service.yaml
+
+Test from debug pod
+curl http://backend-preview:8080/health
+
+output shows green 2.0.0
+
+if green works fine switch the route(network) to green
+for that in k9s edit  main service and update with version: green under selector to route
+traffic to green i.e., version 2.0.0
+
+Test after switching the traffic to green
+curl http://backend:8080/health
+
+output shows green 2.0.0
+
+to test version 3.0.0
+Next change image in blue-deployment.yaml to backendbluegreen:3.0.0
+
+kubectl apply -f blue-deployment.yaml
+
+ Update with version: blue in preview-service.yaml
+
+ kubectl apply -f preview-service.yaml
+
+Test from debug pod
+curl http://backend-preview:8080/health
+
+output shows blue 3.0.0
+
+if blue 3.0.0 works fine switch the route(network) to blue
+for that in k9s edit  main service and update with version: blue under selector to route
+traffic to blue i.e., version 3.0.0
+
+Test from debug pod
+curl http://backend:8080/health
+
+output shows blue 3.0.0
+
+suppose if any issue occurs in blue 3.0.0 to revert back to previuos version
+In k9s edit  main service and update with version: green under selector to go back to previous version
+
+Test from debug pod
+curl http://backend:8080/health
+
+output shows green 2.0.0

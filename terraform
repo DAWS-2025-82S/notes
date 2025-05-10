@@ -18,6 +18,10 @@ https://developer.hashicorp.com/terraform/tutorials/aws/aws-rds  --- conatains s
 https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_instance  -- syntax for the resources
 https://github.com/terraform-aws-modules/terraform-aws-rds -- open source module for resources
 
+
+https://spacelift.io/blog/terraform-ec2-instance
+
+
 cd D:/GitHub/DAWS-2025-82S/repos/14-expense-infra-dev
  
 for i in $(ls -d *);do cd $i;terraform apply -auto-approve;cd ..;done
