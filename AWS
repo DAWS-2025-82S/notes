@@ -42,6 +42,7 @@ ACM -- AWS certificate Manager
 
 how to resize aws ebs volumes
 EBS
+EFS
 
 Amazon EKS
 spot instances
@@ -67,6 +68,8 @@ create IAM policy in AWS for RBAC in kubernetes
 Create Users
 
 secrets
+
+ECR -- in Jenkins CI pipleine
 
 VPC and subnets Creation
 ---------------------------------------------------------------------------------

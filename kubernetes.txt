@@ -54,7 +54,14 @@ RBAC
   ClusterRole
   ClusterRoleBinding
 ServiceAccount
-Daemonset  
+Daemonset
+EKS cluster infra using terraform
+BlueGreenDeployment
+EKS Cluster Upgrade
+	cordon
+	drain
+K8 Architecture
+
   
 Just me and Opensource -- youtube channel for kubernetes
 
@@ -1570,6 +1577,10 @@ eks Architecture diagram
 20-bastion
 40-eks
 
+terraform init
+terraform plan
+terraform apply -auto-approve
+
 https://github.com/terraform-aws-modules/terraform-aws-eks -- opensource eks module
 
 EKS Managed Node Group
@@ -1588,6 +1599,8 @@ session 59
 27-terraform-aws-eks
 
 	30-rds
+
+copy from 14-expense-infra-dev --> 40-rds  to 30-rds in 27-terraform-aws-eks
 	
 nslookup mysql-dev.raj82s.online	
 
@@ -1636,10 +1649,14 @@ change     res.json("This is the health check for blue 1.0.0");
 commit and push to git
 
 In Bastion
-git clone https://29-expense-docker
+git clone https://github.com/DAWS-2025-82S/29-expense-docker.git
 
-cd expense-docker
-cd backend
+cd 29-expense-docker
+cd 02-backend
+
+For blue
+change      res.json("This is the health check for blue 1.0.0");
+commit and push to git
 
 docker build -t dath1/backendbluegreen:1.0.0 .
 docker login -u dath1
@@ -1647,13 +1664,12 @@ docker push dath1/backendbluegreen:1.0.0
 
 In 29-expense-docker repo
 For green
-change      res.json("This is the health check for green 2.0.0");
+change      res.json("This is the health check for GREEN 2.0.0");
 commit and push to git
 
 In Bastion
 git pull
 docker build -t dath1/backendbluegreen:2.0.0 .
-docker login -u dath1
 docker push dath1/backendbluegreen:2.0.0
 
 In 29-expense-docker repo
@@ -1664,7 +1680,6 @@ commit and push to git
 In Bastion
 git pull
 docker build -t dath1/backendbluegreen:3.0.0 .
-docker login -u dath1
 docker push dath1/backendbluegreen:3.0.0
  
 
@@ -1685,8 +1700,9 @@ use transactions;
 show tables;
 
 check with expense user also:
-mysql -h mysql-dev.raj82s.online -u expense -pExpenseApp1
-
+ mysql -h mysql-dev.raj82s.online -u expense -pExpenseApp@1
+ 
+ 
 In Bastion
 -----------
 git clone https://github.com/DAWS-2025-82S/28-k8-blue-green.git
@@ -1719,7 +1735,6 @@ To debug the issue from pod create debug pod since there is no root access in ma
 28-k8-blue-green
 cd debug
 docker build -t dath1/debug:1.0.0 .
-docker login
 docker push dath1/debug:1.0.0
 
 kubectl apply -f manifest.yaml
@@ -1780,10 +1795,11 @@ DNS retry
 Blue Green test steps
 ---------------------
 
+For version 1.0.0 change image in blue-deployment.yaml to backendbluegreen:1.0.0
+
 kubectl create namespace expense
 kubectl apply -f config-map.yaml
 
-For version 1.0.0 change image in blue-deployment.yaml to backendbluegreen:1.0.0
 kubectl apply -f blue-deployment.yaml
 
 kubectl apply -f main-service.yaml
@@ -1860,11 +1876,334 @@ R53 --> web alb
 
 R53 --> another ALB --> another TG
 
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 60
+--------------------------------------------------------------------------------------------------------------------------------
+
+connect to bastion using ssh and then
+	aws configure  -- for bastion to connect to eks
+	
+	aws eks update-kubeconfig --region <region> --name <ClusterName>
+
+	aws eks update-kubeconfig --region us-east-1 --name expense-dev
+	
+	kubectl get nodes
+	
+nslookup mysql-dev.raj82s.online	
+	
+setup Db using Bastion
+----------------------
+sudo dnf install mysql -y
+mysql -h mysql-dev.raj82s.online -u root -pExpenseApp1
+vim backend.sql
+
+mysql -h mysql-dev.raj82s.online -u root -pExpenseApp1 < backend.sql
+
+check the db
+-------------
+mysql -h mysql-dev.raj82s.online -u root -pExpenseApp1
+use transactions;
+show tables;
+
+check with expense user also:
+mysql -h mysql-dev.raj82s.online -u expense -pExpenseApp@1
 
 
+git clone https://github.com/DAWS-2025-82S/28-k8-blue-green.git	
+cd 28-k8-blue-green
+cd backend
 
+kubectl create namespace expense
+kubens expense
+kubectl apply -f config-map.yaml
+
+kubectl apply -f blue-deployment.yaml
+
+Install k9s by opening new tab
+
+2 ways to expose the frontend
+------------------------------
+1. Create ingress resource that creates ALB, Listener, Rule and Target group
+
+follow the steps same as in ReadMe of 25-k8-ingress repo
+
+eksctl utils associate-iam-oidc-provider \
+    --region us-east-1 \
+    --cluster expense-dev \
+    --approve
+	
+curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.12.0/docs/install/iam_policy.json
+
+aws iam create-policy \
+    --policy-name AWSLoadBalancerControllerIAMPolicy \
+    --policy-document file://iam-policy.json
+	
+eksctl create iamserviceaccount \
+--cluster=expense-dev \
+--namespace=kube-system \
+--name=aws-load-balancer-controller \
+--attach-policy-arn=arn:aws:iam::311141550186:policy/AWSLoadBalancerControllerIAMPolicy \
+--override-existing-serviceaccounts \
+--region us-east-1 \
+--approve
+
+helm repo add eks https://aws.github.io/eks-charts
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=expense-dev --set serviceAccount.create=true --set serviceAccount.name=aws-load-balancer-controller
+
+ kubectl get pods -n kube-system
+ kubectl get deployments -n kube-system
+ 
+ kubectl describe deployment aws-load-balancer-controller -n kube-system
+ 
+ kubectl get rs -n kube-system
+ 
+ kubectl describe rs <aws-load-balancer-controller-SOMID> -n kube-system
+ 
+aws-load-balancer-controller pods failed to create and can be verified using above commands
+
+To fix this set serviceAccount.create=true in helm command
+
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=expense-dev --set serviceAccount.create=true --set serviceAccount.name=aws-load-balancer-controller
+ 
+helm list -n kube-system
+
+helm uninstall aws-load-balancer-controller -n kube-system
+
+verify in k9s pods in kube-system or using below command
+
+ kubectl get pods -n kube-system
+
+frontend
+--------
+set frontend in 28-k8-blue-green by copying the files 21-k8-expense-volumes repo from 03-frontend
+
+	copy configmap,deployment,service 21-k8-expense-volumes repo from 03-frontend to frontend in 28-k8-blue-green
+	
+	copy ingress from 25-k8-ingress to ingress file
+
+Certificate
+------------
+Delete the certificate in aws and we will create certificate using terraform
+
+27-terraform-aws-eks
+50-acm
+
+copy from 14-expense-infra-dev --> 70-acm  to 50-acm in 27-terraform-aws-eks and make necessary changes
+
+cd to 50-acm in 27-terraform-aws-eks
+
+terraform init
+terraform plan
+terraform apply -auto-approve
+
+Update the certificate arn in 28-k8-blue-green repo frontend folder in ingress.yaml file
+
+cd 28-k8-blue-green/backend
+
+kubectl apply -f main-service.yaml
+
+cd ../frontend
+kubectl apply -f configmap.yaml
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl apply -f ingress.yaml
+
+Ingress from frontend ingress.yaml Failed to create Load Balancer in AWS.
+To check the error logs in k9s go to kube-system namespace 
+Got the error below:
+------------------
+ {"level":"error","ts":"2025-05-11T20:31:23Z","msg":"Reconciler error","controller":"ingress","object":{"name":"joindevops"},"namespace":""," ││ {"level":"error","ts":"2025-05-11T20:42:19Z","logger":"backend-sg-provider","msg":"Failed to auto-create backend SG","error":"operation erro ││ {"level":"error","ts":"2025-05-11T20:42:19Z","msg":"Reconciler error","controller":"ingress","object":{"name":"joindevops"},"namespace":""," ││                                                          
+
+To fix the above error in AWS for one of the node add the policy "AmazonEC2FullAccess" in Iam Policy 
+
+Finally add A record for Load Balancer in Route 53 to access the application
+
+https://expense-dev.raj82s.online/
+
+Delete ingress from k9s and the above approach is not recommended and use terrafrom approach below
+
+2. We create ALB, Listener, Rule, TG through terraform. EKS adds the pods to the TG
+
+Create using terraform
+27-terraform-aws-eks
+	60-ingress-alb
+	
+copy from 14-expense-infra-dev --> 80-web-alb  to 60-ingress-alb in 27-terraform-aws-eks and make necessary changes
+	
+terraform init
+terraform plan
+terraform apply -auto-approve
+
+TargetGroupBinding -- to register the pods in the target group
+--------------------
+https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.7/guide/targetgroupbinding/targetgroupbinding/
+
+update the target group arn in tgb.yaml
+kubectl apply -f tgb.yaml
+
+test the application
+
+https://expense-dev.raj82s.online/
+
+Network Policy in kubernetes
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 61 -- GIT
+--------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 62 -- GIT
+--------------------------------------------------------------------------------------------------------------------------------
+part of session 63 is also GIT
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 63
+--------------------------------------------------------------------------------------------------------------------------------
+EKS cluster upgrade
+
+create below from 27-terraform-aws-eks repo
+-----------------------------------------
+00-vpc
+10-sg
+20-bastion
+40-eks
+
+Applications will not go down when upgrading EKS cluster
+
+you cannot do any changes or deployments to the applications but existing applications will run because the traffic flows as below
+
+raj82s.online --> ALB --> TargetGroup --> Pod IP
+
+Restrict the access to the cluster using security group before upgrade
+
+In BlueGreen Deployment
+-----------------------
+blue --> running version
+green provision, basic testing
+change service to green
+
+In EKS
+------
+blue nodes are running
+will create same number of green nodes
+cordon green nodes, scheduling disabled(pods will not come to this node)
+eks control plane upgrade to 1.32
+green nodes also should be upgraded to 1.32 and uncordon
+cordon blue nodes, scheduling disabled
+drain blue nodes, so pods in blue nodes will go to green nodes
+now we can delete blue group
+
+Connect to Bastion
+
+aws configure
+aws eks update-kubeconfig --region us-east-1 --name expense-dev
+
+kubectl get nodes
+
+kubectl apply -f https://raw.githubusercontent.com/DAWS-2025-82S/19-k8s-resources/refs/heads/main/17-deployment-service.yaml
+
+kubectl get pods
+kubectl get pods | wc -l  ------ check the pods count before upgrade
+kuectl get svc --- to verify the service created with Load Balancer
+
+Allow the 30007 port in node security group
+Test with url http://<LB_DNS_NAME>:80
+
+Add green node group code  in 40-eks in main.tf file
+
+and apply the changes
+terraform plan
+terraform apply -auto-approve
+
+green node group will be added in cluster
+
+cordon Green node group
+	kubectl get nodes
+
+	kubectl cordon <Green-NodeName>
+
+	kubectl get nodes   -- shows scheduling is disabled for 2 nodes
+
+go to AWS and click on upgrade and confirm to update cluster
+
+cluster starts updating and you can verify the app is still working with url 
+http://<LB_DNS_NAME>:80
+
+After cluster upgrade(upgrade option is available for node group) then upgrade green nodes also
+
+eks etcd backup -- backup taken when upgrading cluster and can be restored if any cluster issues
+
+https://aws.amazon.com/blogs/containers/backup-and-restore-your-amazon-eks-cluster-resources-using-velero/
+https://www.netapp.com/learn/cbs-aws-blg-eks-back-up-how-to-back-up-and-restore-eks-with-velero/
+
+After Green node group upgrade scheduling disabled is automatically enabled
+		kubectl get nodes
+
+After Green node group upgrade cordon blue node group
+
+	kubectl get nodes
+
+	kubectl cordon <Blue-NodeName>
+
+	kubectl get nodes
+	
+Then Drain Blue Node group to move the pods to green node group	
+https://kubernetes.io/docs/reference/kubectl/generated/kubectl_drain/
+
+	kubectl drain <Blue-NodeName> --ignore-daemonsets
+	kubectl drain <Blue-NodeName> --ignore-daemonsets --delete-emptydir-data	
+
+Then check pods are moved to Green Node group
+	kubectl get nodes
+	kubectl get pods -o wide
+
+Then comment Blue Node Group code in  40-eks in main.tf file
+Also update cluster_version = "1.32"
+
+Then to delete Blue nodes
+
+terraform plan
+terraform apply -auto-approve
+
+verify the app is still working with url 
+http://<LB_DNS_NAME>:80
+
+kubectl get pods | wc -l  ---- check the pods count after upgrade
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 64
+--------------------------------------------------------------------------------------------------------------------------------
+K8 Architecture
+===================
+Master/Control plane and worker node
+
+Api server: it is the first component that receives request from client. 
+			it checks authentication and authorization intially and then forwards the request to appropriate components
+
+Scheduler: scheduler takes the decision about where to schedule the work loads. 
+		it checks user preferences like taints, toleration, node affinity, pod affinity, etc.
+		if no preference scheduler runs the pod on any random available worker node
+
+Controll manager: node control, replication controll, sa controller.. 
+		replication control is responsible to make sure desired number of pod replicas run all the time..
+		node control is responsible to make sure all the nodes are connected and ready..
+
+etcd: this is database to our cluster. cluster configs, resource configs are stored here..
+
+cloud-controller-manager: responsible to integrate eks cluster with other cloud services like IAM, LB, Ingress, etc.
+
+worker node components:
+========================
+
+kubelet: responsible to connect the worker node to control plane. 
+		it gets the pod spec from master node and make sure pod runs on the node
+
+kube-proxy: it is like DNS to the pods. It provides the network rules on how to forward request through workloads like service to pods.
+			pod to pod communication
+
+container runtime: is responsible to run the image into container.
+
+add-ons: vpc-cni, kube-dns, metrics-server, ebs, efs, etc.
 
 ------------------------------------------------------------------------------------------
+
 CrashLoopBackoff - unable to create pod from image i.e., unable to keep the pod running continuously
 ErrorImagePull - unable to pull the image
 Pending -- pod in pending status if pod and volume are in different zones AZ.
@@ -1876,11 +2215,13 @@ Dynamic EBS and EFS both are not working
 Pod fails to connect to DB because of DNS problem but node able to connect to DB   
 sol: EKS resolves DNS on UDP port 53  so if protocol="tcp" is cofigured Pod in
 EKS cannot connect to DB so configure protocol= "-1" to allow all protocols
+https://repost.aws/knowledge-center/eks-dns-failure
 
 on what basis mapping between EKS and AWS user done?Is it username?   
 
 How role and rolebinding works in k8s without AWS
 
+check deployment history 
 switching to specific version in BlueGreen Deployment
 
 

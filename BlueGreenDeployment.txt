@@ -1,9 +1,26 @@
 https://thenewstack.io/deployment-strategies/
 https://spacelift.io/blog/kubernetes-deployment-strategies
 
+Create EKS infra using terraform
+eks Architecture diagram
 
-Blue Green Deployment steps:
-----------------------------
+27-terraform-aws-eks
+---------------------
+00-vpc
+10-sg
+20-bastion
+40-eks
+30-rds
+Test BlueGreen Deployment
+Delete the certificate in aws and we will create certificate using terraform
+50-acm
+Create LB
+	Create LB using ingress i.e., without terrafrom or
+	Cretae LB using terraform 60-ingress-alb
+60-ingress-alb
+
+Kubernetes Blue Green Deployment steps:
+---------------------------------------
 Create infra using 27-terraform-aws-eks repo
 27-terraform-aws-eks
 ---------------------
@@ -13,6 +30,7 @@ Create infra using 27-terraform-aws-eks repo
 40-eks
 30-rds
 Create 3 images with 29-expense-docker repo same as 18-expense-docker --> 02-backend
+	git clone https://github.com/DAWS-2025-82S/29-expense-docker.git
 setup Database from Bastion
 git clone https://github.com/DAWS-2025-82S/28-k8-blue-green.git
 cd 28-k8-blue-green

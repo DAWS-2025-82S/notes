@@ -1,0 +1,240 @@
+Jenkins CI
+Jenkins installation using t3.small instance
+30-Jenkins-practice
+Pipeline syntax
+  Plugins - Pipeline: stage view -- to display pipeline stages
+Master and Agent/Node architecture
+setup Master and agent node
+use t3.medium instance with 50 GB for master and agent
+agent
+post
+Declarative vs Scripted
+environment
+options
+parameters
+triggers
+webhooks -- creation in github
+tools
+input
+when
+parallel stages
+sequential stages
+31-cicd-tools -- repo for creating Jenkins Master and agent nodes using terraform
+32-backend git url https://github.com/DAWS-2025-82S/32-backend.git -- backend code for CICD
+	create Jenkins file
+	Create Docker file 
+Backend CI/CD pipeline in Jenkins
+CI Pipeline for Infra
+Jenkins Backup
+	
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 64
+--------------------------------------------------------------------------------------------------------------------------------
+Jenkins
+===================
+continous integration --> integrate the code continously
+1. build errors
+2. deployment errors
+
+compile, dependencies install, pack the code into artifact, build the image, push image to central registry
+
+shift-left process --> building, scanning, testing the application in DEV environment 
+
+clone the code, dependencies install, scan the code, unit tests, pack the code
+
+process of integrating the continously when developer push the code to remote repository. It involves clone the code, compile the code, install dependencies, do multiple types of scans, run unit test cases and create the image/artifact, store in central registry... we follow shift left process to identify or make sure quality of code in the early stages of DEV environment...
+we use jenkins to do these CI..
+
+Jenkins is a plain web server, jenkins power lies in pluings, if you want jenkins to do some taks you need either install plugin or command inside jenkins server/node...
+
+everything in jenkins is called as job
+
+pre-build, build and post-build
+
+freestyle vs pipeline
+----------------------
+can't restore if something is misconfigured
+can't track who did the changes
+can't version control
+can't review the code
+
+pipeline is a code
+----------------------
+version control
+easy to review
+easy to restore
+easy to track
+easy to extend to multiple projects
+
+Pipeline syntax
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 65
+--------------------------------------------------------------------------------------------------------------------------------
+Master and Agent/Node architecture
+---------------------------------
+java, nodejs python, reactjs
+
+1acre
+100 acres --> he should have employees/resources
+
+setup Master and agent node
+use t3.medium instance with 50 GB for master and agent
+
+only master can't handle multiple builds at a time
+every project needs different runtime environments and different versions. master can't handle all these things, 
+we will have multiple agents specialised for different environments
+
+host IP, username and password
+
+agent
+post
+
+declarative vs scripted
+-------------------------
+
+scripted --> it is groovy based pipeline from jenkins beginning
+declarative --> jenkins-2.0 launched declarative pipeline using groovy
+
+scripted --> pipeline is compiled at the time of runtime
+declarative --> entire pipeline is compiled first and then run
+
+declarative pipeline --> standard/easy syntax
+scripted --> dynamic groovy syntax, little tough but we can control pipeline with lot of flexibility
+
+we use hybrid for more advantages
+environment
+options
+parameters
+triggers
+webhooks will be used for triggers
+webhooks
+-----------
+when developer push the code, it should automatically trigger CI pipeline
+
+github --> event driven --> jenkins
+
+Create webhook in github
+--------------------------
+1.Go to project settings and select Create webhook
+
+2.For payload URL confgiure Jenkins URL
+
+	http://<JenkinsIP/Domain>/github-webhook/
+
+3.Provide content-type as application/json
+4.Enable or disbale SSL
+5.select events you would like to trigger this webhook?
+6.In Jenkins enable the option "Github hook trigger for GITScm polling"
+
+tools
+input
+when
+parallel stages
+sequential stages
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 66
+--------------------------------------------------------------------------------------------------------------------------------
+31-cicd-tools -- repo for creating Jenkins Master and agent nodes using terraform
+
+terraform init -reconfigure
+terraform plan
+terraform apply -auto-approve
+
+Access the Jenkins server using  
+
+http://jenkins.raj82s.online:8080
+
+set up jenkins and add plugins
+
+Configure agent node from jenkins using manage 
+  name - joindevops
+  no of executors - 3
+  Remote dir - /home/ec2-user/jenkins-agent
+  Label - AGENT-1
+  Usage - only build jobs with lable expressions matching the nodes
+  host - jenkins-agent.raj82s.online
+  Add credentials with ID ssh-auth
+     ec2-user
+	 DevOps321
+  Host key verification strategy - Non verifying Verification Strategy
+  
+Add all the plugins mentioned in ReadME file  
+  
+Install node js on agent node
+-----------------------------
+dnf module disable nodejs -y
+dnf module enable nodejs:20 -y
+dnf install nodejs -y  
+  
+Backend CI/CD pipeline
+----------------------
+Download and Copy the code of  backend to create CI/CD pipeline
+Add pipeline: Utility steps plugin
+
+In Visual studio setup 32-backend repo in github
+  - Download the code from https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
+  - set up project 32-backend using the downloaded code and Create JenkinsFile for pipeline
+  - Create docker file
+
+copy the docker file from 18-expense-docker --> 02-backend
+
+In Jenkins create pipeline for backend
+
+	configure 32-backend git url https://github.com/DAWS-2025-82S/32-backend.git
+
+Create ECR(Amazon Elastic Container Registry) repository in AWS    
+
+Use/Update the pipeline to build and push the image to AWS ECR repository
+	
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 315069654700.dkr.ecr.us-east-1.amazonaws.com
+
+	docker build -t 315069654700.dkr.ecr.us-east-1.amazonaws.com/expense/backend:appVersion .
+
+	docker push 315069654700.dkr.ecr.us-east-1.amazonaws.com/expense/backend:appVersion
+
+Create webhook in github
+--------------------------
+1.Go to project settings and select Create webhook
+
+2.For payload URL confgiure Jenkins URL
+
+	http://jenkins.raj82s.online:8080/github-webhook/
+
+3.Provide content-type as application/json
+4.Enable or disbale SSL
+5.select events you would like to trigger this webhook?
+6.In Jenkins enable the option "Github hook trigger for GITScm polling"
+
+CI Pipeline for Infra
+---------------------
+Create expense infra using pipelines
+copy the code from 27-terraform-aws-eks and add Jenkins file
+
+In Jenkins Create Pipeline for Infra with folders
+
+	EXPENSE-->INFRA-->DEV-->00-vpc
+	
+	 Create pipeline from Jenkins file usng git url
+	
+Take backup of /var/lib/jenkins folder for jenkins backup
+-------------------------------------------------------------------------------------------------------------------------------------------------
+session 67
+--------------------------------------------------------------------------------------------------------------------------------
+Create expense infra using pipelines
+copy the code from 27-terraform-aws-eks and add Jenkins file for others
+
+create infra using upstream and downstream jobs
+In Jenkins Create Pipeline for Infra with folders
+
+	EXPENSE-->INFRA-->DEV-->
+	
+10-sg
+20-bastion
+40-eks
+30-rds
+50-acm
+60-ingress-alb
+
